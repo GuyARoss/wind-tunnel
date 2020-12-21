@@ -1,6 +1,8 @@
 package schema
 
 import (
+	"bufio"
+	"io"
 	"strings"
 
 	"github.com/stretchr/stew/slice"
@@ -64,6 +66,28 @@ const (
 	stringPropertyType supportedPropertyType = "String"
 	intPropertyType    supportedPropertyType = "Int"
 )
+
+func parseFile(file io.Reader) (*ParserResponse, error) {
+	ctx := &lineCtx{
+		prevLineType:             emptyLineType,
+		scope:                    noScopeType,
+		transientScopeProperties: make(map[string]string),
+		parserResponse: ParserResponse{
+			definitions: make(map[string]*SchemaScope),
+			stages:      make(map[string]*SchemaScope),
+		},
+	}
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		err := ctx.parseLine(scanner.Bytes())
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return &ctx.parserResponse, nil
+}
 
 func (ctx *lineCtx) parseLine(line []byte) error {
 	if len(line) == 0 {
