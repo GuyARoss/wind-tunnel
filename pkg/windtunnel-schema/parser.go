@@ -2,21 +2,13 @@ package schema
 
 import (
 	"bufio"
+	"errors"
+	"fmt"
 	"io"
 	"strings"
 
 	"github.com/stretchr/stew/slice"
 )
-
-type SchemaParser interface {
-	// Parse(f []byte) (ParserResponse, error)
-}
-
-type WindTunnelSchemaParser struct{}
-
-func (p *WindTunnelSchemaParser) Parse() (*ParserResponse, error) {
-	return nil, nil
-}
 
 type parseSymbol string
 
@@ -67,7 +59,8 @@ const (
 	intPropertyType    supportedPropertyType = "Int"
 )
 
-func parseFile(file io.Reader) (*ParserResponse, error) {
+// ParseFile parse file objects to the schema profile
+func ParseFile(file io.Reader) (*ParserResponse, error) {
 	ctx := &lineCtx{
 		prevLineType:             emptyLineType,
 		scope:                    noScopeType,
@@ -86,7 +79,20 @@ func parseFile(file io.Reader) (*ParserResponse, error) {
 		}
 	}
 
-	return &ctx.parserResponse, nil
+	schemaError := validateDefinitionStageMatch(ctx)
+	return &ctx.parserResponse, schemaError
+}
+
+func validateDefinitionStageMatch(ctx *lineCtx) error {
+	// ensure that all definitions that are defined within stages exist
+	for stage, stageValues := range ctx.parserResponse.stages {
+		for _, definitionName := range stageValues.properties {
+			if ctx.parserResponse.definitions[definitionName] == nil {
+				return fmt.Errorf("definition (%s) missing for stage %s", definitionName, stage)
+			}
+		}
+	}
+	return nil
 }
 
 func (ctx *lineCtx) parseLine(line []byte) error {
@@ -165,15 +171,11 @@ func (ctx *lineCtx) parseLine(line []byte) error {
 
 func validateDefinitionScope(propertyType string) error {
 	validProperties := []supportedPropertyType{stringPropertyType, intPropertyType}
-	if !slice.Contains(validProperties, propertyType) {
-		// @@ throw unsupported property type
+	if slice.Contains(validProperties, propertyType) {
+		return nil
 	}
 
-	return nil
-}
-
-func validateStageScope() error {
-	return nil
+	return fmt.Errorf("Unsupported property %s", propertyType)
 }
 
 func validateNoScope(linePartitions []string) error {
@@ -188,15 +190,14 @@ func validateNoScope(linePartitions []string) error {
 		}
 	}
 
-	// @@ can't find scope throw error dat da scope type is invalid
-	return nil
+	return errors.New("invalid scope type")
 }
 
 func validateScopeParition(linePartitions []string) error {
 	// @@ validate property
-	if len(linePartitions) != 2 {
-		// @@ throw invalid length size err
+	if len(linePartitions) == 2 {
+		return nil
 	}
 
-	return nil
+	return errors.New("invalid scope line partition size")
 }

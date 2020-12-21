@@ -134,3 +134,6 @@ func TestParseLine_ExistingDefinitionScope(t *testing.T) {
 		t.Errorf("transientScopeProperties expected String got %s", lctx.transientScopeProperties["fileName"])
 	}
 }
+
+func TestValidateDefinitionStageMatch(t *testing.T) {
+}
