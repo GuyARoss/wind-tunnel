@@ -1,0 +1,2 @@
+const arguments = process.argv
+
