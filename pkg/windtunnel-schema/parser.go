@@ -46,8 +46,8 @@ type SchemaScope struct {
 }
 
 type ParserResponse struct {
-	definitions map[string]SchemaScope
-	stages      map[string]SchemaScope
+	definitions map[string]*SchemaScope
+	stages      map[string]*SchemaScope
 }
 
 type lineCtx struct {
@@ -70,6 +70,7 @@ func (ctx *lineCtx) parseLine(line []byte) error {
 		// empty line detected
 		ctx.prevLineType = emptyLineType
 		ctx.scope = noScopeType
+		ctx.transientScopeProperties = make(map[string]string)
 
 		return nil
 	}
@@ -78,8 +79,7 @@ func (ctx *lineCtx) parseLine(line []byte) error {
 	linePartitions := strings.Split(strLine, " ")
 
 	if linePartitions[0] == string(eofParseSymbol) {
-		// @@ update parser response, eof char found
-		completedScope := SchemaScope{
+		completedScope := &SchemaScope{
 			name:       ctx.scopeID,
 			properties: ctx.transientScopeProperties,
 		}
@@ -97,6 +97,11 @@ func (ctx *lineCtx) parseLine(line []byte) error {
 			}
 		}
 
+		ctx.scopeID = ""
+		ctx.scope = noScopeType
+		ctx.transientScopeProperties = make(map[string]string)
+		ctx.prevLineType = symbolLineType
+
 		return nil
 	}
 
@@ -111,6 +116,7 @@ func (ctx *lineCtx) parseLine(line []byte) error {
 		ctx.scope = scopeType(linePartitions[0])
 		ctx.scopeID = linePartitions[1] // @@ validate dis
 		ctx.prevLineType = schemaLineType
+		return nil
 	}
 
 	if scopePartionErr != nil {
