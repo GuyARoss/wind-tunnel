@@ -1,6 +1,6 @@
 stage Stage1 {
     prestage None
     in Stage1In
-    out Stage1In
+    out Stage1Out
     poststage Stage1Out
 }
