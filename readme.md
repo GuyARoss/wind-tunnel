@@ -1,3 +1,3 @@
 # Wind Tunnel
-Langauge agnostic distributed data processing pipeline.
+Barebones language-agnostic distributed data processing pipeline.
 
