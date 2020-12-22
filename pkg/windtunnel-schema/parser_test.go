@@ -25,6 +25,25 @@ func TestParseLine_EmptyLine(t *testing.T) {
 	}
 }
 
+func TestParseLine_IndentLine(t *testing.T) {
+	parserResponse := ParserResponse{
+		definitions: make(map[string]*SchemaScope),
+		stages:      make(map[string]*SchemaScope),
+	}
+	lctx := &lineCtx{
+		scopeID:                  "testScope",
+		scope:                    schemaDefinitionScopeType,
+		transientScopeProperties: make(map[string]string),
+		prevLineType:             propertyLineType,
+		parserResponse:           parserResponse,
+	}
+
+	err := lctx.parseLine([]byte("    name String"))
+	if err != nil {
+		t.Error("parse line should handle indent")
+	}
+}
+
 func TestParseLine_EOFCharStageScope(t *testing.T) {
 	properties := make(map[string]string)
 	properties["TestProperty"] = "String"
@@ -135,5 +154,11 @@ func TestParseLine_ExistingDefinitionScope(t *testing.T) {
 	}
 }
 
-func TestValidateDefinitionStageMatch(t *testing.T) {
+func TestParseLineIndent(t *testing.T) {
+	got := parseLineIndent("    cat 123")
+	expect := "cat 123"
+
+	if got != expect {
+		t.Errorf("parse line indent expected %s got %s", got, expect)
+	}
 }

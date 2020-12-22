@@ -50,6 +50,7 @@ type lineCtx struct {
 	scopeID                  string
 	transientScopeProperties map[string]string
 	parserResponse           ParserResponse
+	lineIndex                int
 }
 
 type supportedPropertyType string
@@ -58,6 +59,11 @@ const (
 	stringPropertyType supportedPropertyType = "String"
 	intPropertyType    supportedPropertyType = "Int"
 )
+
+func (ctx *lineCtx) createLineErr(errorStr string) error {
+	updatedMsg := fmt.Sprintf("schema compilation error: '%s' near our around line %d", errorStr, ctx.lineIndex)
+	return errors.New(updatedMsg)
+}
 
 // ParseFile parse file objects to the schema profile
 func ParseFile(file io.Reader) (*ParserResponse, error) {
@@ -69,6 +75,7 @@ func ParseFile(file io.Reader) (*ParserResponse, error) {
 			definitions: make(map[string]*SchemaScope),
 			stages:      make(map[string]*SchemaScope),
 		},
+		lineIndex: 0,
 	}
 
 	scanner := bufio.NewScanner(file)
@@ -77,18 +84,22 @@ func ParseFile(file io.Reader) (*ParserResponse, error) {
 		if err != nil {
 			return nil, err
 		}
+
+		ctx.lineIndex++
 	}
 
-	schemaError := validateDefinitionStageMatch(ctx)
+	schemaError := ctx.validateDefinitionStageMatch()
 	return &ctx.parserResponse, schemaError
 }
 
-func validateDefinitionStageMatch(ctx *lineCtx) error {
+func (ctx *lineCtx) validateDefinitionStageMatch() error {
 	// ensure that all definitions that are defined within stages exist
 	for stage, stageValues := range ctx.parserResponse.stages {
 		for _, definitionName := range stageValues.properties {
 			if ctx.parserResponse.definitions[definitionName] == nil {
-				return fmt.Errorf("definition (%s) missing for stage %s", definitionName, stage)
+				return ctx.createLineErr(
+					fmt.Sprintf("definition (%s) missing for stage %s", definitionName, stage),
+				)
 			}
 		}
 	}
@@ -105,7 +116,8 @@ func (ctx *lineCtx) parseLine(line []byte) error {
 		return nil
 	}
 
-	strLine := string(line)
+	strLine := parseLineIndent(string(line))
+	// strLine := string(line)
 	linePartitions := strings.Split(strLine, " ")
 
 	if linePartitions[0] == string(eofParseSymbol) {
@@ -135,10 +147,10 @@ func (ctx *lineCtx) parseLine(line []byte) error {
 		return nil
 	}
 
-	scopePartionErr := validateScopeParition(linePartitions)
+	scopePartionErr := ctx.validateScopeParition(linePartitions)
 
 	if ctx.scope == noScopeType {
-		noScopeErr := validateNoScope(linePartitions)
+		noScopeErr := ctx.validateNoScope(linePartitions)
 		if noScopeErr != nil {
 			return noScopeErr
 		}
@@ -157,7 +169,7 @@ func (ctx *lineCtx) parseLine(line []byte) error {
 	propertyType := linePartitions[1]
 
 	if ctx.scope == schemaDefinitionScopeType {
-		definitionScopeErr := validateDefinitionScope(propertyType)
+		definitionScopeErr := ctx.validateDefinitionScope(propertyType)
 		if definitionScopeErr != nil {
 			return definitionScopeErr
 		}
@@ -169,16 +181,16 @@ func (ctx *lineCtx) parseLine(line []byte) error {
 	return nil
 }
 
-func validateDefinitionScope(propertyType string) error {
+func (ctx *lineCtx) validateDefinitionScope(propertyType string) error {
 	validProperties := []supportedPropertyType{stringPropertyType, intPropertyType}
 	if slice.Contains(validProperties, propertyType) {
 		return nil
 	}
 
-	return fmt.Errorf("Unsupported property %s", propertyType)
+	return ctx.createLineErr(fmt.Sprintf("Unsupported property %s", propertyType))
 }
 
-func validateNoScope(linePartitions []string) error {
+func (ctx *lineCtx) validateNoScope(linePartitions []string) error {
 	newScope := linePartitions[0] // @validate that it is not empty
 
 	validScopes := []scopeType{schemaDefinitionScopeType, schemaStageScopeType}
@@ -190,14 +202,26 @@ func validateNoScope(linePartitions []string) error {
 		}
 	}
 
-	return errors.New("invalid scope type")
+	return ctx.createLineErr(fmt.Sprintf("invalid scope type '%s'", newScope))
 }
 
-func validateScopeParition(linePartitions []string) error {
+func (ctx *lineCtx) validateScopeParition(linePartitions []string) error {
 	// @@ validate property
 	if len(linePartitions) == 2 {
 		return nil
 	}
 
-	return errors.New("invalid scope line partition size")
+	return ctx.createLineErr("invalid line formatting")
+}
+
+func parseLineIndent(input string) string {
+	stop := 0
+	for idx, char := range input {
+		if char != ' ' {
+			stop = idx
+			break
+		}
+	}
+
+	return input[stop:]
 }

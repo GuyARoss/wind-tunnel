@@ -2,7 +2,7 @@ definition Stage1In {
     name String
 }
 
-defintion Stage1Out {
+definition Stage1Out {
     firstName String
     lastName String
 }
