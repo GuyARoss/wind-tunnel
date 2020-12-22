@@ -1,12 +1,14 @@
-schema: ./schema 
+schema: 
+  baseDir: ./schema
   stage: stage-schema.wt
-  defintion: definition-schema.wt
+  definition: definition-schema.wt
 
 stages:
-  stage1: Stage1
+  - name: Stage1
     runCmd: node
     
-    code: ./stages/stage1/
+    code: 
+      baseDir: ./stages/stage1/
       prestage: prestage.js
       stage: stage.js
       poststage: poststage.js
