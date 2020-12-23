@@ -14,9 +14,9 @@ func (template *SchemaTemplate) Generate(schemaParser *schema.ParserResponse) st
 		output[len(output)-1] = newStruct(k, v.Properties, publicAccess)
 	}
 
-	for k, v := range schemaParser.Stages {
-		output[len(output)-1] = newStruct(k, v.Properties, publicAccess)
-	}
+	// for k, v := range schemaParser.Stages {
+	// 	output[len(output)-1] = newStruct(k, v.Properties, publicAccess)
+	// }
 
 	return ``
 }

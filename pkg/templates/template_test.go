@@ -4,14 +4,15 @@ import "testing"
 
 func TestNewStruct_Public(t *testing.T) {
 	expected := `
-	struct Test123 {
-		Property1 String
-		Property2 String
-		Property3 String
+	type Test123 struct {
+		Property1 string
+		Property2 string
 	}
 	`
 
 	properties := make(map[string]string, 3)
+	properties["Property1"] = "String"
+	properties["Property2"] = "String"
 
 	got := newStruct("test123", properties, publicAccess)
 	if expected != got {
@@ -21,14 +22,15 @@ func TestNewStruct_Public(t *testing.T) {
 
 func TestNewStruct_Private(t *testing.T) {
 	expected := `
-	struct test123 {
+	type test123 struct {
 		Property1 string
 		Property2 string
-		Property3 string
 	}
 	`
 
 	properties := make(map[string]string, 3)
+	properties["Property1"] = "String"
+	properties["Property2"] = "String"
 
 	got := newStruct("test123", properties, privateAccess)
 	if expected != got {
