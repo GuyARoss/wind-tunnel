@@ -6,13 +6,11 @@ func TestNewStruct_Public(t *testing.T) {
 	expected := `
 	type Test123 struct {
 		Property1 string
-		Property2 string
 	}
 	`
 
 	properties := make(map[string]string, 3)
 	properties["Property1"] = "String"
-	properties["Property2"] = "String"
 
 	got := newStruct("test123", properties, publicAccess)
 	if expected != got {
@@ -24,13 +22,11 @@ func TestNewStruct_Private(t *testing.T) {
 	expected := `
 	type test123 struct {
 		Property1 string
-		Property2 string
 	}
 	`
 
 	properties := make(map[string]string, 3)
 	properties["Property1"] = "String"
-	properties["Property2"] = "String"
 
 	got := newStruct("test123", properties, privateAccess)
 	if expected != got {
