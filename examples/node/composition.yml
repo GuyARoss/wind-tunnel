@@ -1,7 +1,7 @@
-schema: 
+schema:
   baseDir: ./schema
-  stage: stage-schema.wt
-  definition: definition-schema.wt
+  stage: stages.windtunnel
+  definition: definitions.windtunnel
 
 stages:
   - name: Stage1

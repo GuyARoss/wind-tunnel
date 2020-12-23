@@ -1,6 +1,12 @@
 package main
 
-import "gopkg.in/yaml.v2"
+import (
+	"errors"
+	"fmt"
+	"os"
+
+	"gopkg.in/yaml.v2"
+)
 
 // CompositionConfiguration yaml based configuration for windtunnel
 type CompositionConfiguration struct {
@@ -25,4 +31,19 @@ func (config *CompositionConfiguration) marshal(data []byte) error {
 	err := yaml.Unmarshal([]byte(data), config)
 
 	return err
+}
+
+func (config *CompositionConfiguration) validate() error {
+	stageSchemaPath := fmt.Sprintf("%s/%s", config.Schema.BaseDir, config.Schema.Stage)
+	definitionSchemaPath := fmt.Sprintf("%s/%s", config.Schema.BaseDir, config.Schema.Definition)
+
+	if _, err := os.Stat(stageSchemaPath); os.IsNotExist(err) {
+		return errors.New("cannot locate stage schema file")
+	}
+
+	if _, err := os.Stat(definitionSchemaPath); os.IsNotExist(err) {
+		return errors.New("cannot locate definition schema file")
+	}
+
+	return nil
 }

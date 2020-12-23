@@ -17,6 +17,11 @@ func main() {
 		panic(err)
 	}
 
+	validationErr := config.validate()
+	if validationErr != nil {
+		panic(validationErr)
+	}
+
 	fmt.Println(config)
 
 	// generate client wrappers
