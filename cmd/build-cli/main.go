@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 
-	schema "github.com/GuyARoss/windtunnel/pkg/windtunnel-schema"
+	"github.com/GuyARoss/windtunnel/pkg/schema"
 )
 
 func main() {
@@ -23,7 +23,6 @@ func main() {
 	if schemaValidationErr != nil {
 		panic(schemaValidationErr)
 	}
-	fmt.Println(marshalSchema.Stages)
 
 	// generate client wrappers
 	//  -- schema defintion to struct
@@ -32,6 +31,7 @@ func main() {
 }
 
 func readConfiguration() *CompositionConfiguration {
+	// @@cli use flag for path
 	data, err := ioutil.ReadFile("./composition.yml")
 	if err != nil {
 		panic(err)
@@ -50,12 +50,3 @@ func readConfiguration() *CompositionConfiguration {
 
 	return config
 }
-
-// fmt.Println(path)
-
-// resp, err := schema.ParseFile(file)
-// if err != nil {
-// 	panic(err)
-// }
-
-// fmt.Println(resp)
