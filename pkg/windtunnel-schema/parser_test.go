@@ -26,9 +26,9 @@ func TestParseLine_EmptyLine(t *testing.T) {
 }
 
 func TestParseLine_IndentLine(t *testing.T) {
-	parserResponse := ParserResponse{
-		definitions: make(map[string]*SchemaScope),
-		stages:      make(map[string]*SchemaScope),
+	parserResponse := &ParserResponse{
+		Definitions: make(map[string]*SchemaScope),
+		Stages:      make(map[string]*SchemaScope),
 	}
 	lctx := &lineCtx{
 		scopeID:                  "testScope",
@@ -48,9 +48,9 @@ func TestParseLine_EOFCharStageScope(t *testing.T) {
 	properties := make(map[string]string)
 	properties["TestProperty"] = "String"
 
-	parserResponse := ParserResponse{
-		definitions: make(map[string]*SchemaScope),
-		stages:      make(map[string]*SchemaScope),
+	parserResponse := &ParserResponse{
+		Definitions: make(map[string]*SchemaScope),
+		Stages:      make(map[string]*SchemaScope),
 	}
 
 	lctx := &lineCtx{
@@ -67,12 +67,12 @@ func TestParseLine_EOFCharStageScope(t *testing.T) {
 		t.Error("EOFChar should not return an error")
 	}
 
-	stage := lctx.parserResponse.stages["testScope"]
-	if stage == nil || stage.name != "testScope" {
+	stage := lctx.parserResponse.Stages["testScope"]
+	if stage == nil || stage.Name != "testScope" {
 		t.Error("error inserting stage")
 	}
 
-	if stage.properties == nil || stage.properties["TestProperty"] != "String" {
+	if stage.Properties == nil || stage.Properties["TestProperty"] != "String" {
 		t.Error("error inserting properties into stage")
 	}
 
@@ -89,9 +89,9 @@ func TestParseLine_EOFCharDefinitionScope(t *testing.T) {
 	properties := make(map[string]string)
 	properties["TestProperty"] = "String"
 
-	parserResponse := ParserResponse{
-		definitions: make(map[string]*SchemaScope),
-		stages:      make(map[string]*SchemaScope),
+	parserResponse := &ParserResponse{
+		Definitions: make(map[string]*SchemaScope),
+		Stages:      make(map[string]*SchemaScope),
 	}
 
 	lctx := &lineCtx{
@@ -108,12 +108,12 @@ func TestParseLine_EOFCharDefinitionScope(t *testing.T) {
 		t.Error("EOFChar should not return an error")
 	}
 
-	stage := lctx.parserResponse.definitions["testScope"]
-	if stage == nil || stage.name != "testScope" {
+	stage := lctx.parserResponse.Definitions["testScope"]
+	if stage == nil || stage.Name != "testScope" {
 		t.Error("error inserting definition")
 	}
 
-	if stage.properties == nil || stage.properties["TestProperty"] != "String" {
+	if stage.Properties == nil || stage.Properties["TestProperty"] != "String" {
 		t.Error("error inserting properties into definition")
 	}
 

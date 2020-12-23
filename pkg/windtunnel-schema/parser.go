@@ -4,7 +4,7 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
-	"io"
+	"os"
 	"strings"
 
 	"github.com/stretchr/stew/slice"
@@ -35,13 +35,13 @@ const (
 )
 
 type SchemaScope struct {
-	name       string
-	properties map[string]string
+	Name       string
+	Properties map[string]string
 }
 
 type ParserResponse struct {
-	definitions map[string]*SchemaScope
-	stages      map[string]*SchemaScope
+	Definitions map[string]*SchemaScope
+	Stages      map[string]*SchemaScope
 }
 
 type lineCtx struct {
@@ -49,8 +49,9 @@ type lineCtx struct {
 	scope                    scopeType
 	scopeID                  string
 	transientScopeProperties map[string]string
-	parserResponse           ParserResponse
+	parserResponse           *ParserResponse
 	lineIndex                int
+	fileName                 string
 }
 
 type supportedPropertyType string
@@ -61,45 +62,58 @@ const (
 )
 
 func (ctx *lineCtx) createLineErr(errorStr string) error {
-	updatedMsg := fmt.Sprintf("schema compilation error: '%s' near our around line %d", errorStr, ctx.lineIndex)
+	updatedMsg := fmt.Sprintf("schema compilation error: '%s' at line %d of %s", errorStr, ctx.lineIndex, ctx.fileName)
 	return errors.New(updatedMsg)
 }
 
-// ParseFile parse file objects to the schema profile
-func ParseFile(file io.Reader) (*ParserResponse, error) {
+// ParseFile uses prexisting parser response to apply to schema file
+func (r *ParserResponse) ParseFile(path string) error {
+	file, err := os.Open(path)
+	if err != nil {
+		panic(err)
+	}
+	defer file.Close()
+
 	ctx := &lineCtx{
 		prevLineType:             emptyLineType,
 		scope:                    noScopeType,
 		transientScopeProperties: make(map[string]string),
-		parserResponse: ParserResponse{
-			definitions: make(map[string]*SchemaScope),
-			stages:      make(map[string]*SchemaScope),
-		},
-		lineIndex: 0,
+		parserResponse:           r,
+		lineIndex:                0,
+		fileName:                 path,
 	}
 
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		err := ctx.parseLine(scanner.Bytes())
 		if err != nil {
-			return nil, err
+			return err
 		}
 
 		ctx.lineIndex++
 	}
 
-	schemaError := ctx.validateDefinitionStageMatch()
-	return &ctx.parserResponse, schemaError
+	return nil
 }
 
-func (ctx *lineCtx) validateDefinitionStageMatch() error {
+// ParseFile parse file objects to the schema profile
+func ParseFile(path string) (*ParserResponse, error) {
+	resp := &ParserResponse{
+		Definitions: make(map[string]*SchemaScope),
+		Stages:      make(map[string]*SchemaScope),
+	}
+
+	return resp, resp.ParseFile(path)
+}
+
+// ValidateDefinitionStageMatch validates that definitions can be linked to stages
+func (r *ParserResponse) ValidateDefinitionStageMatch() error {
 	// ensure that all definitions that are defined within stages exist
-	for stage, stageValues := range ctx.parserResponse.stages {
-		for _, definitionName := range stageValues.properties {
-			if ctx.parserResponse.definitions[definitionName] == nil {
-				return ctx.createLineErr(
-					fmt.Sprintf("definition (%s) missing for stage %s", definitionName, stage),
-				)
+	for stage, stageValues := range r.Stages {
+		fmt.Println(stage, stageValues.Properties)
+		for _, definitionName := range stageValues.Properties {
+			if definitionName != "None" && r.Definitions[definitionName] == nil {
+				return fmt.Errorf("definition `%s` missing for stage `%s`", definitionName, stage)
 			}
 		}
 	}
@@ -117,24 +131,23 @@ func (ctx *lineCtx) parseLine(line []byte) error {
 	}
 
 	strLine := parseLineIndent(string(line))
-	// strLine := string(line)
 	linePartitions := strings.Split(strLine, " ")
 
 	if linePartitions[0] == string(eofParseSymbol) {
 		completedScope := &SchemaScope{
-			name:       ctx.scopeID,
-			properties: ctx.transientScopeProperties,
+			Name:       ctx.scopeID,
+			Properties: ctx.transientScopeProperties,
 		}
 
 		switch ctx.scope {
 		case schemaDefinitionScopeType:
 			{
-				ctx.parserResponse.definitions[ctx.scopeID] = completedScope
+				ctx.parserResponse.Definitions[ctx.scopeID] = completedScope
 				break
 			}
 		case schemaStageScopeType:
 			{
-				ctx.parserResponse.stages[ctx.scopeID] = completedScope
+				ctx.parserResponse.Stages[ctx.scopeID] = completedScope
 				break
 			}
 		}
@@ -187,7 +200,7 @@ func (ctx *lineCtx) validateDefinitionScope(propertyType string) error {
 		return nil
 	}
 
-	return ctx.createLineErr(fmt.Sprintf("Unsupported property %s", propertyType))
+	return ctx.createLineErr(fmt.Sprintf("unsupported property `%s`", propertyType))
 }
 
 func (ctx *lineCtx) validateNoScope(linePartitions []string) error {
@@ -202,7 +215,7 @@ func (ctx *lineCtx) validateNoScope(linePartitions []string) error {
 		}
 	}
 
-	return ctx.createLineErr(fmt.Sprintf("invalid scope type '%s'", newScope))
+	return ctx.createLineErr(fmt.Sprintf("invalid scope type `%s`", newScope))
 }
 
 func (ctx *lineCtx) validateScopeParition(linePartitions []string) error {
