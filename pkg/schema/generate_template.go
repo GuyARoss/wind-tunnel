@@ -3,15 +3,15 @@ package schema
 import template "github.com/GuyARoss/windtunnel/pkg/golang-template"
 
 type SchemaTemplate struct {
+	StageCodePaths map[string]string
+	codeTemplate   *template.CodeTemplate
 }
 
-func (schema *SchemaTemplate) Generate(schemaParser *ParserResponse) (string, error) {
-	codeTemplate := &template.CodeTemplate{}
-
+func (s *SchemaTemplate) Generate(schemaParser *ParserResponse) error {
 	for k, v := range schemaParser.Definitions {
-		applyErr := codeTemplate.ApplyStruct(k, v.Properties, template.PublicAccess)
+		applyErr := s.codeTemplate.ApplyStruct(k, v.Properties, template.PublicAccess)
 		if applyErr != nil {
-			return "", applyErr
+			return applyErr
 		}
 	}
 
@@ -19,7 +19,19 @@ func (schema *SchemaTemplate) Generate(schemaParser *ParserResponse) (string, er
 	// 	output[len(output)-1] = newStruct(k, v.Properties, publicAccess)
 	// }
 
-	return "", nil
+	return nil
+}
+
+func (s *SchemaTemplate) generateStage(stageName string, stageProperties map[string]string) error {
+	err := s.codeTemplate.ApplyStruct(stageName, make(map[string]string, 0), template.PrivateAccess)
+
+	if err != nil {
+		return err
+	}
+
+	s.codeTemplate.ApplyFunc("validat ")
+
+	return nil
 }
 
 /* @@todo
