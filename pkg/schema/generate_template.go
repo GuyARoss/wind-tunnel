@@ -13,6 +13,8 @@ func (s *SchemaTemplate) Generate(schemaParser *ParserResponse) error {
 		if applyErr != nil {
 			return applyErr
 		}
+		validateOutput := []string{"error"}
+		s.codeTemplate.ApplyFunc("validate", make(map[string]string), validateOutput, propertyValue)	
 	}
 
 	// for k, v := range schemaParser.Stages {
@@ -28,11 +30,10 @@ func (s *SchemaTemplate) generateStage(stageName string, stageProperties map[str
 	if err != nil {
 		return err
 	}
-
-	s.codeTemplate.ApplyFunc("validat ")
-
+	
 	return nil
 }
+
 
 /* @@todo
 // @@ do this for all of em

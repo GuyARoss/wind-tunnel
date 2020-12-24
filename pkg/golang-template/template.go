@@ -67,13 +67,13 @@ func (t *CodeTemplate) append(data string) {
 
 // ApplyStruct creates a new struct within the code template
 func (t *CodeTemplate) ApplyStruct(name string, properties map[string]string, access accessModification) error {
-	structProperies := make([]string, 0)
+	structProperties := make([]string, 0)
 	for propertyKey, propertyValue := range properties {
 		value := propertyValue
 		if isPrimitiveType(value) {
 			value = strings.ToLower(propertyValue)
 		}
-		structProperies = append(structProperies, newStructProperty(propertyKey, value, access))
+		structProperties = append(structProperties, newStructProperty(propertyKey, value, access))
 	}
 
 	name = access.formatToAccessType(name)
@@ -83,26 +83,26 @@ func (t *CodeTemplate) ApplyStruct(name string, properties map[string]string, ac
 	type %s struct {
 	%s
 	}
-	`, name, strings.Join(structProperies, "\n	")))
+	`, name, strings.Join(structProperties, "\n	")))
 
 	return nil
 }
 
 // ApplyFunc creates a new func within the code template
 // note: body is not validated
-func (t *CodeTemplate) ApplyFunc(name string, inputs map[string]string, output []string, reciever string, body string) error {
+func (t *CodeTemplate) ApplyFunc(name string, inputs map[string]string, output []string, receiver string, body string) error {
 	seralizedInputs := make([]string, 0)
 	for k, v := range inputs {
 		// @@todo validate that the values exist in scope
 		seralizedInputs = append(seralizedInputs, fmt.Sprintf("%s %s", k, v))
 	}
 
-	if len(reciever) > 0 {
+	if len(receiver) > 0 {
 		t.append(fmt.Sprintf(`
 		func (r %s) %s(%s) (%s) {
 			%s
 		}
-		`, reciever, name, strings.Join(seralizedInputs, ","), strings.Join(output, ","), body))
+		`, receiver, name, strings.Join(seralizedInputs, ","), strings.Join(output, ","), body))
 		return nil
 	}
 

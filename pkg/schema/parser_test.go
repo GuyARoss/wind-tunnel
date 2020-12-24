@@ -154,6 +154,12 @@ func TestParseLine_ExistingDefinitionScope(t *testing.T) {
 	}
 }
 
+func TestValidateStageProperties(t *testing.T) {
+	lctx := &lineCtx{
+		
+	}
+}
+
 func TestParseLineIndent(t *testing.T) {
 	got := parseLineIndent("    cat 123")
 	expect := "cat 123"

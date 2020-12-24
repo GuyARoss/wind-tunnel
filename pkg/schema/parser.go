@@ -203,6 +203,25 @@ func (ctx *lineCtx) validateDefinitionScope(propertyType string) error {
 	return ctx.createLineErr(fmt.Sprintf("unsupported property `%s`", propertyType))
 }
 
+func (ctx *lineCtx) validateStageProperties() error {
+	requiredFields := []string{"prestage", "in", "out", "poststage"}
+
+	for stage, stageValues := ctx.parserResponse.Stages {
+		countFound := 0
+		for propertyKey := stageValues.Properties {
+			if slice.Contains(requiredFields, propertyKey) {
+				countFound++
+			}
+		}
+
+		if countFound != len(requiredFields) {
+			return fmt.Errorf("stage `%s` missing required stages", stage)
+		}
+	}
+
+	return nil
+}
+
 func (ctx *lineCtx) validateNoScope(linePartitions []string) error {
 	newScope := linePartitions[0] // @validate that it is not empty
 
