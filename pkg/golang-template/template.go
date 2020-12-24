@@ -99,10 +99,10 @@ func (t *CodeTemplate) ApplyFunc(name string, inputs map[string]string, output [
 
 	if len(receiver) > 0 {
 		t.append(fmt.Sprintf(`
-		func (r %s) %s(%s) (%s) {
-			%s
-		}
-		`, receiver, name, strings.Join(seralizedInputs, ","), strings.Join(output, ","), body))
+	func (r %s) %s(%s) (%s) {
+		%s
+	}
+	`, receiver, name, strings.Join(seralizedInputs, ", "), strings.Join(output, ","), body))
 		return nil
 	}
 
@@ -110,7 +110,7 @@ func (t *CodeTemplate) ApplyFunc(name string, inputs map[string]string, output [
 	func %s(%s) (%s) {
 		%s
 	}
-	`, name, strings.Join(seralizedInputs, ","), strings.Join(output, ","), body))
+	`, name, strings.Join(seralizedInputs, ", "), strings.Join(output, ","), body))
 
 	return nil
 }
