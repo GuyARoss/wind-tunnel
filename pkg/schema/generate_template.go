@@ -41,22 +41,21 @@ func generateStage(stageName string, stageProperties map[string]string) (*templa
 /* @@todo
 type Stage1In struct{}
 
-func (r *Stage1In) validate() error {
-	// ensure that the fields are correct
-}
+func (r *Stage1In) validate() error {}
 
 type Stage1Out struct{}
 
-func (r *Stage1Out) validate() error {
+func (r *Stage1Out) validate() error {}
 
+
+type Stage struct {
+	codeFile
 }
-
-
-type Stage struct {}
 
 func stageManager(data []byte) (*Stage1Out, error) {
 	// marshal data from input
-	// call stage1 pre, stage, post
+	// call stage
+	// return stage
 }
 
 func (s *Stage1) stage() (*Stage1In, error) {
@@ -65,25 +64,12 @@ func (s *Stage1) stage() (*Stage1In, error) {
 	// validate output + marshal it
 }
 
-func (s *Stage1) prestage() (*Stage1In, error) {
-	// ~ validate input
-	// call the builtin running the content
-	// ~ validate output + marshal it
-}
-
-func (s *Stage1) poststage() (*Stage1Out, error) {
-	// ~validate input
-	// call the builtin running the content
-	// ~validate output is what we are expecting + marshal it
-}
 */
 
 // high level
 // grpc in request
-// call stages
-// 	pre, validate
+// call stage
 //  main, validate
-// 	post, validate
 // grpc out request
 
 /*

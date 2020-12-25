@@ -37,6 +37,12 @@ func newStructProperty(key string, value string, access accessModification) stri
 	return fmt.Sprintf("	%s %s", key, value)
 }
 
+type codeChars string
+
+const (
+	eodCodeChar codeChars = "}"
+)
+
 type primitiveFieldTypes string
 
 const (
@@ -53,7 +59,8 @@ func isPrimitiveType(field string) bool {
 type CodeTemplate struct {
 	structs map[string]map[string]string
 
-	Content string
+	Content    string
+	BuiltinDir string
 }
 
 func (t *CodeTemplate) append(data string) {
@@ -111,6 +118,55 @@ func (t *CodeTemplate) ApplyFunc(name string, inputs map[string]string, output [
 		%s
 	}
 	`, name, strings.Join(seralizedInputs, ", "), strings.Join(output, ","), body))
+
+	return nil
+}
+
+type builtinScopeType string
+
+const (
+	nonScopeType builtinScopeType = ""
+)
+
+type builtinCtx struct {
+	requiredDependencies []string
+	sourceMap            map[string]string
+	scope                builtinScopeType
+}
+
+func (ctx *builtinCtx) parseBuiltinLine(
+	line []byte,
+) error {
+	lineStr := string(line)
+	if ctx.scope != nonScopeType {
+		if lineStr == string(eodCodeChar) {
+			ctx.sourceMap[string(ctx.scope)] += lineStr
+			ctx.scope = nonScopeType
+		}
+
+		// not eod yet, so pass
+		return nil
+	}
+
+	for _, rd := range ctx.requiredDependencies {
+		if slice.Contains(lineStr, rd) {
+			ctx.scope = builtinScopeType(rd)
+			ctx.sourceMap[rd] += lineStr
+
+			return nil
+		}
+	}
+
+	return nil
+}
+
+// LoadBuiltin applies builtin + dependencies to the code template
+func (t *CodeTemplate) LoadBuiltin(
+	builtinsDir string,
+	requiredDependencies []string,
+	changeMap map[string]string,
+) error {
+	// check bulitin dir files for dependecies
 
 	return nil
 }
