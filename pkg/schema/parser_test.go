@@ -155,8 +155,26 @@ func TestParseLine_ExistingDefinitionScope(t *testing.T) {
 }
 
 func TestValidateStageProperties(t *testing.T) {
+	properties := make(map[string]string)
+	properties["prestage"] = "None"
+	properties["in"] = "None"
+	properties["out"] = "None"
+	properties["poststage"] = "None"
+
+	stages := make(map[string]*SchemaScope)
+	stages["test"] = &SchemaScope{
+		Name:       "test",
+		Properties: properties,
+	}
+
 	lctx := &lineCtx{
-		
+		parserResponse: &ParserResponse{
+			Stages: stages,
+		},
+	}
+	err := lctx.validateStageProperties()
+	if err != nil {
+		t.Error("should not yield error")
 	}
 }
 
