@@ -6,9 +6,4 @@ schema:
 stages:
   - name: Stage1
     runCmd: node
-    
-    code: 
-      baseDir: ./stages/stage1/
-      prestage: prestage.js
-      stage: stage.js
-      poststage: poststage.js
+    codeFile: ./stages/stage1/stage.js

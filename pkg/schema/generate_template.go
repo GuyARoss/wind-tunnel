@@ -14,6 +14,8 @@ func (s *SchemaTemplate) Generate(schemaParser *ParserResponse) (map[string]*tem
 	// @lazy load in structs, apply the ones that will be needed for the stage
 
 	for stageName, stageFields := range schemaParser.Stages {
+		// @@ validate that each stage has a code path, if not throw error
+
 		stageGenerationResponse, stageGenerationErr := generateStage(stageName, stageFields.Properties)
 		if stageGenerationErr != nil {
 			return templates, stageGenerationErr
@@ -37,31 +39,42 @@ func generateStage(stageName string, stageProperties map[string]string) (*templa
 }
 
 /* @@todo
-// @@ do this for all of em
+type Stage1In struct{}
+
+func (r *Stage1In) validate() error {
+	// ensure that the fields are correct
+}
+
+type Stage1Out struct{}
+
+func (r *Stage1Out) validate() error {
+
+}
+
+
 type Stage struct {}
 
-func stageManager([]byte data) (*Stage1Out, error) {
+func stageManager(data []byte) (*Stage1Out, error) {
 	// marshal data from input
 	// call stage1 pre, stage, post
 }
 
-func (r *Stage1In) validate() (error) {
-	// ensure that the fields are correct
+func (s *Stage1) stage() (*Stage1In, error) {
+	// ~validate input
+	// call the builtin running the content
+	// validate output + marshal it
 }
 
-func (s *Stage1) stage() (Stage1In, error) {
+func (s *Stage1) prestage() (*Stage1In, error) {
+	// ~ validate input
 	// call the builtin running the content
-	// validate output is what we are expecting + marshal it
+	// ~ validate output + marshal it
 }
 
-func (s *Stage1) prestage() (Stage1In, error) {
+func (s *Stage1) poststage() (*Stage1Out, error) {
+	// ~validate input
 	// call the builtin running the content
-	// validate output is what we are expecting + marshal it
-}
-
-func (s *Stage1) poststage() (Stage1In, error) {
-	// call the builtin running the content
-	// validate output is what we are expecting + marshal it
+	// ~validate output is what we are expecting + marshal it
 }
 */
 

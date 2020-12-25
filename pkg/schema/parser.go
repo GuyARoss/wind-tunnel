@@ -204,7 +204,7 @@ func (ctx *lineCtx) validateDefinitionScope(propertyType string) error {
 }
 
 func (ctx *lineCtx) validateStageProperties() error {
-	requiredFields := []string{"prestage", "in", "out", "poststage"}
+	requiredFields := []string{"in", "out"}
 
 	for stage, stageValues := range ctx.parserResponse.Stages {
 		countFound := 0
