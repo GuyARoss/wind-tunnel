@@ -134,6 +134,25 @@ type builtinCtx struct {
 	scope                builtinScopeType
 }
 
+func linearStrContains(line string, matchTo string) bool {
+	matchCharIdx := 0
+	matchSize := len(matchTo) - 1
+
+	for _, c := range line {
+		if string(c) != string(matchTo[matchCharIdx]) {
+			matchCharIdx = 0
+			continue
+		}
+
+		matchCharIdx++
+		if matchCharIdx == matchSize {
+			return true
+		}
+	}
+
+	return matchSize == matchCharIdx
+}
+
 func (ctx *builtinCtx) parseBuiltinLine(
 	line []byte,
 ) error {
@@ -149,7 +168,7 @@ func (ctx *builtinCtx) parseBuiltinLine(
 	}
 
 	for _, rd := range ctx.requiredDependencies {
-		if slice.Contains(lineStr, rd) {
+		if linearStrContains(lineStr, rd) {
 			ctx.scope = builtinScopeType(rd)
 			ctx.sourceMap[rd] += lineStr
 
@@ -166,7 +185,7 @@ func (t *CodeTemplate) LoadBuiltin(
 	requiredDependencies []string,
 	changeMap map[string]string,
 ) error {
-	// check bulitin dir files for dependecies
+	// check bulitin dir files
 
 	return nil
 }

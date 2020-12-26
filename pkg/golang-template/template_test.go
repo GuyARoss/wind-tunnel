@@ -95,3 +95,31 @@ func TestParseBuiltinLine_EOD(t *testing.T) {
 		t.Errorf("expected } got %s", bctx.sourceMap["test"])
 	}
 }
+
+func TestParseBuiltinLine_IsDependecy(t *testing.T) {
+	bctx := &builtinCtx{
+		scope:                "",
+		sourceMap:            make(map[string]string),
+		requiredDependencies: []string{"myFunc"},
+	}
+
+	lineContent := "func myFunc(lst []string) error"
+
+	err := bctx.parseBuiltinLine([]byte(lineContent))
+	if err != nil {
+		t.Error("eod parse should not throw err")
+	}
+
+	if bctx.sourceMap["myFunc"] != lineContent {
+		t.Errorf("line content does not match, expected %s got %s", lineContent, bctx.sourceMap["myFunc"])
+	}
+}
+
+func TestLinearStrContains(t *testing.T) {
+	in := "doesthiswork"
+	resp := linearStrContains(in, "this")
+
+	if resp != true {
+		t.Error("expected to assert true")
+	}
+}
