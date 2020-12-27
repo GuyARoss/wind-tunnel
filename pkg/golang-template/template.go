@@ -67,8 +67,10 @@ type funcTemplate struct {
 
 // CodeTemplateCtx holds the template context throughout the lifecycle
 type CodeTemplateCtx struct {
-	structs map[string][]string
-	funcs   map[string]*funcTemplate
+	structs  map[string][]string
+	funcs    map[string]*funcTemplate
+	imports  map[string]string
+	builtins map[string]string
 
 	BuiltinDir string
 }
@@ -114,8 +116,8 @@ func (t *CodeTemplateCtx) ApplyFunc(name string, inputs map[string]string, outpu
 	return nil
 }
 
-// LoadBuiltin applies builtin + dependencies to the code template
-func (ctx *builtinCtx) LoadBuiltin(
+// ApplyBuiltin applies builtin + their dependencies to the code template
+func (t *CodeTemplateCtx) ApplyBuiltin(
 	builtinsDir string,
 	requiredDependencies []string,
 	changeMap map[string]string,
@@ -133,7 +135,33 @@ func (ctx *builtinCtx) LoadBuiltin(
 		bctx.loadBuiltinFile(file)
 	}
 
-	// @@ apply source maps + validate imports
+	// apply source maps + validate imports
+	for k, v := range bctx.imports {
+		t.imports[k] = v
+	}
+
+	for k, v := range bctx.sourceMap {
+		t.builtins[k] = v
+	}
 
 	return nil
+}
+
+// Generate performs the code generation process for the code template
+func (t *CodeTemplateCtx) Generate() (*GeneratedTemplate, error) {
+	gtemp := &GeneratedTemplate{
+		Content: "",
+	}
+
+	for structKey, structProperties := range t.structs {
+		gtemp.generateStruct(structKey, structProperties)
+	}
+
+	for _, funcTemplate := range t.funcs {
+		gtemp.generateFunc(funcTemplate)
+	}
+
+	gtemp.generateImports(t.imports)
+
+	return gtemp, nil
 }

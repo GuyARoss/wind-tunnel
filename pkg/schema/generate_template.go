@@ -2,21 +2,21 @@ package schema
 
 import template "github.com/GuyARoss/windtunnel/pkg/golang-template"
 
-type SchemaTemplate struct {
+type GenerationSettings struct {
 	StageCodePaths map[string]string
 }
 
-// Generate generates a new code template for the schema
-func (s *SchemaTemplate) Generate(schemaParser *ParserResponse) (map[string]*template.CodeTemplateCtx, error) {
+// Load loads in client code generated from the schema
+func (s *ParserResponse) Load(settings *GenerationSettings) (map[string]*template.CodeTemplateCtx, error) {
 	// @@ validate that the pre, main & post input/ outputs line up
 	templates := make(map[string]*template.CodeTemplateCtx)
 
-	// @lazy load in structs, apply the ones that will be needed for the stage
+	// @@todo: lazy load in structs, apply the ones that will be needed for the stage
 
-	for stageName, stageFields := range schemaParser.Stages {
+	for stageName, stageFields := range s.Stages {
 		// @@ validate that each stage has a code path, if not throw error
 
-		stageGenerationResponse, stageGenerationErr := generateStage(stageName, stageFields.Properties)
+		stageGenerationResponse, stageGenerationErr := loadStage(stageName, stageFields.Properties)
 		if stageGenerationErr != nil {
 			return templates, stageGenerationErr
 		}
@@ -27,7 +27,7 @@ func (s *SchemaTemplate) Generate(schemaParser *ParserResponse) (map[string]*tem
 	return templates, nil
 }
 
-func generateStage(stageName string, stageProperties map[string]string) (*template.CodeTemplateCtx, error) {
+func loadStage(stageName string, stageProperties map[string]string) (*template.CodeTemplateCtx, error) {
 	stageCode := &template.CodeTemplateCtx{}
 	err := stageCode.ApplyStruct(stageName, make(map[string]string, 0), template.PrivateAccess)
 

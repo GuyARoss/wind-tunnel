@@ -19,6 +19,24 @@ func (t *GeneratedTemplate) append(data string) {
 	t.Content += fmt.Sprintf("%s \n", data)
 }
 
+func (t *GeneratedTemplate) generateModuleName(name string) {
+	t.Content += fmt.Sprintf("package %s", name)
+}
+
+func (t *GeneratedTemplate) generateImports(imports map[string]string) {
+	values := make([]string, len(imports))
+	idx := 0
+	for _, v := range imports {
+		values[idx] = fmt.Sprintf("\"%s\"", v)
+	}
+
+	t.Content += fmt.Sprintf(`
+	import (
+		%s
+	)
+	`, strings.Join(values, "\n"))
+}
+
 func (t *GeneratedTemplate) generateStruct(name string, structProperties []string) {
 	t.append(fmt.Sprintf(`
 	type %s struct {

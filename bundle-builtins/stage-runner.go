@@ -57,6 +57,6 @@ func (r *pipeEnv) readFromPipe() (*xxx_Pipeout, error) {
 	return deserial, deserialErr
 }
 
-func startUpStage() {
-
+func startUpStage() error {
+	return nil
 }

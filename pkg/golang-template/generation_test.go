@@ -60,3 +60,21 @@ func TestGenerateFunc_NoReciver(t *testing.T) {
 		t.Errorf("expected %s got %s", expected, temp.Content)
 	}
 }
+
+func TestGenerateImports(t *testing.T) {
+	temp := &GeneratedTemplate{Content: ""}
+	expected := `
+	import (
+		"thing"
+	)
+	`
+
+	imports := make(map[string]string)
+	imports["roast"] = "thing"
+
+	temp.generateImports(imports)
+
+	if expected != temp.Content {
+		t.Errorf("expected %s got %s", expected, temp.Content)
+	}
+}
