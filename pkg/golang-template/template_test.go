@@ -123,3 +123,16 @@ func TestLinearStrContains(t *testing.T) {
 		t.Error("expected to assert true")
 	}
 }
+
+func TestParseImportLine(t *testing.T) {
+	expected := &importLine{
+		name: "test",
+		path: "github.com/GuyARoss/test",
+	}
+
+	out := parseImportLine("\"github.com/GuyARoss/test\"")
+
+	if out.name != expected.name && out.path != expected.path {
+		t.Errorf("expected %s got %s", expected, out)
+	}
+}

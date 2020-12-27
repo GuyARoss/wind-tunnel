@@ -1,9 +1,13 @@
 package template
 
 import (
+	"bufio"
 	"fmt"
+	"log"
+	"os"
 	"strings"
 
+	"github.com/GuyARoss/windtunnel/pkg/utilities"
 	"github.com/stretchr/stew/slice"
 )
 
@@ -40,7 +44,8 @@ func newStructProperty(key string, value string, access accessModification) stri
 type codeChars string
 
 const (
-	eodCodeChar codeChars = "}"
+	endCodeBlockChar   codeChars = "}"
+	endImportBlockChar codeChars = ")"
 )
 
 type primitiveFieldTypes string
@@ -125,14 +130,9 @@ func (t *CodeTemplate) ApplyFunc(name string, inputs map[string]string, output [
 type builtinScopeType string
 
 const (
-	nonScopeType builtinScopeType = ""
+	nonScopeType    builtinScopeType = ""
+	importScopeType builtinScopeType = "import"
 )
-
-type builtinCtx struct {
-	requiredDependencies []string
-	sourceMap            map[string]string
-	scope                builtinScopeType
-}
 
 func linearStrContains(line string, matchTo string) bool {
 	matchCharIdx := 0
@@ -153,18 +153,51 @@ func linearStrContains(line string, matchTo string) bool {
 	return matchSize == matchCharIdx
 }
 
+type builtinCtx struct {
+	requiredDependencies []string
+	sourceMap            map[string]string
+	scope                builtinScopeType
+	imports              map[string]string
+}
+
+type importLine struct {
+	name string
+	path string
+}
+
+func parseImportLine(line string) *importLine {
+	path := strings.Split(line, "\"")[1]
+	filePaths := strings.Split(path, "/")
+
+	return &importLine{
+		name: filePaths[len(filePaths)-1],
+		path: path,
+	}
+}
+
 func (ctx *builtinCtx) parseBuiltinLine(
 	line []byte,
 ) error {
 	lineStr := string(line)
 	if ctx.scope != nonScopeType {
-		if lineStr == string(eodCodeChar) {
+		if lineStr == string(endCodeBlockChar) {
 			ctx.sourceMap[string(ctx.scope)] += lineStr
 			ctx.scope = nonScopeType
 		}
 
-		// not eod yet, so pass
+		// not end of def yet, so pass
 		return nil
+	}
+
+	// @@ check if single line import
+	if ctx.scope == importScopeType {
+		if slice.Contains(lineStr, endImportBlockChar) {
+			ctx.scope = nonScopeType
+			return nil
+		}
+
+		importLine := parseImportLine(string(line))
+		ctx.imports[importLine.name] = importLine.path
 	}
 
 	for _, rd := range ctx.requiredDependencies {
@@ -179,13 +212,46 @@ func (ctx *builtinCtx) parseBuiltinLine(
 	return nil
 }
 
+func (ctx *builtinCtx) loadBuiltinFile(filePath string) error {
+	file, err := os.Open(filePath)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		ctx.parseBuiltinLine(scanner.Bytes())
+	}
+
+	if err := scanner.Err(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // LoadBuiltin applies builtin + dependencies to the code template
 func (t *CodeTemplate) LoadBuiltin(
 	builtinsDir string,
 	requiredDependencies []string,
 	changeMap map[string]string,
 ) error {
-	// check bulitin dir files
+	files := utilities.FindFiles(builtinsDir, ".go")
+
+	bctx := &builtinCtx{
+		requiredDependencies: requiredDependencies,
+		sourceMap:            make(map[string]string),
+		scope:                nonScopeType,
+		imports:              make(map[string]string),
+	}
+
+	for _, file := range files {
+		bctx.loadBuiltinFile(file)
+	}
+
+	// @@ apply source maps + validate imports
+	t.
 
 	return nil
 }
