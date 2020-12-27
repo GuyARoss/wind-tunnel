@@ -7,9 +7,9 @@ type SchemaTemplate struct {
 }
 
 // Generate generates a new code template for the schema
-func (s *SchemaTemplate) Generate(schemaParser *ParserResponse) (map[string]*template.CodeTemplate, error) {
+func (s *SchemaTemplate) Generate(schemaParser *ParserResponse) (map[string]*template.CodeTemplateCtx, error) {
 	// @@ validate that the pre, main & post input/ outputs line up
-	templates := make(map[string]*template.CodeTemplate)
+	templates := make(map[string]*template.CodeTemplateCtx)
 
 	// @lazy load in structs, apply the ones that will be needed for the stage
 
@@ -27,8 +27,8 @@ func (s *SchemaTemplate) Generate(schemaParser *ParserResponse) (map[string]*tem
 	return templates, nil
 }
 
-func generateStage(stageName string, stageProperties map[string]string) (*template.CodeTemplate, error) {
-	stageCode := &template.CodeTemplate{}
+func generateStage(stageName string, stageProperties map[string]string) (*template.CodeTemplateCtx, error) {
+	stageCode := &template.CodeTemplateCtx{}
 	err := stageCode.ApplyStruct(stageName, make(map[string]string, 0), template.PrivateAccess)
 
 	if err != nil {
