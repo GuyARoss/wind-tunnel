@@ -27,7 +27,7 @@ func TestGenerateFunc_Reciver(t *testing.T) {
 	}
 	`
 
-	temp.generateFunc(&funcTemplate{
+	temp.generateFunc(&FuncTemplate{
 		name:             "TestFunc",
 		body:             "// do some code",
 		receiverType:     "*Test",
@@ -48,7 +48,7 @@ func TestGenerateFunc_NoReciver(t *testing.T) {
 	}
 	`
 
-	temp.generateFunc(&funcTemplate{
+	temp.generateFunc(&FuncTemplate{
 		name:             "TestFunc",
 		body:             "// do some code",
 		receiverType:     "",

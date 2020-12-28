@@ -6,7 +6,7 @@ import (
 
 func TestApplyStruct_Public(t *testing.T) {
 	template := &CodeTemplateCtx{
-		structs: make(map[string]*structTemplate),
+		Structs: make(map[string]*StructTemplate),
 	}
 
 	properties := make(map[string]string, 3)
@@ -15,7 +15,7 @@ func TestApplyStruct_Public(t *testing.T) {
 	template.ApplyStruct("test123", properties, PublicAccess)
 
 	expected := "	Property1 string"
-	got := template.structs["Test123"].properties["Property1"]
+	got := template.Structs["Test123"].properties["Property1"]
 	if got != expected {
 		t.Errorf("expected %s got %s", expected, got)
 	}
@@ -23,7 +23,7 @@ func TestApplyStruct_Public(t *testing.T) {
 
 func TestApplyStruct_Private(t *testing.T) {
 	template := &CodeTemplateCtx{
-		structs: make(map[string]*structTemplate),
+		Structs: make(map[string]*StructTemplate),
 	}
 
 	properties := make(map[string]string, 3)
@@ -32,7 +32,7 @@ func TestApplyStruct_Private(t *testing.T) {
 	template.ApplyStruct("test123", properties, PrivateAccess)
 
 	expected := "	Property1 string"
-	got := template.structs["test123"].properties["Property1"]
+	got := template.Structs["test123"].properties["Property1"]
 	if got != expected {
 		t.Errorf("expected %s got %s", expected, got)
 	}
@@ -40,7 +40,7 @@ func TestApplyStruct_Private(t *testing.T) {
 
 func TestApplyFunc_Reciver(t *testing.T) {
 	template := &CodeTemplateCtx{
-		funcs: make(map[string]*funcTemplate),
+		Funcs: make(map[string]*FuncTemplate),
 	}
 
 	inputs := make(map[string]string)
@@ -50,14 +50,14 @@ func TestApplyFunc_Reciver(t *testing.T) {
 
 	template.ApplyFunc("TestFunc", inputs, output, "*Test", "// do some code")
 
-	if template.funcs["TestFunc"].name != "TestFunc" {
+	if template.Funcs["TestFunc"].name != "TestFunc" {
 		t.Error("error building test func")
 	}
 }
 
 func TestApplyFunc_NoReciver(t *testing.T) {
 	template := &CodeTemplateCtx{
-		funcs: make(map[string]*funcTemplate),
+		Funcs: make(map[string]*FuncTemplate),
 	}
 
 	inputs := make(map[string]string)
@@ -67,7 +67,7 @@ func TestApplyFunc_NoReciver(t *testing.T) {
 
 	template.ApplyFunc("TestFunc", inputs, output, "", "// do some code")
 
-	if template.funcs["TestFunc"].name != "TestFunc" {
+	if template.Funcs["TestFunc"].name != "TestFunc" {
 		t.Error("error building test func")
 	}
 }

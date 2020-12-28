@@ -51,7 +51,7 @@ func (t *GeneratedTemplate) generateStruct(name string, structMapProperties map[
 	`, name, strings.Join(structProperties, "\n	")))
 }
 
-func (t *GeneratedTemplate) generateFunc(temp *funcTemplate) error {
+func (t *GeneratedTemplate) generateFunc(temp *FuncTemplate) error {
 	if len(temp.receiverType) > 0 {
 		t.append(fmt.Sprintf(`
 	func (r %s) %s(%s) (%s) {
