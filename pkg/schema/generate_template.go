@@ -22,7 +22,7 @@ func (s *GenerationSettings) generateStage(stageName string, stageProperties map
 func (s *ParserResponse) Generate(settings *GenerationSettings) (map[string]*template.CodeTemplateCtx, error) {
 	templates := make(map[string]*template.CodeTemplateCtx)
 
-	baseCodeTemplate := 
+	// baseCodeTemplate := 
 
 	// @@todo: lazy load in structs, apply the ones that will be needed for the stage
 	// @@performance: make each of these stages into go routines (they don't rely on each other)
