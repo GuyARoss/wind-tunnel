@@ -10,19 +10,30 @@ import (
 func main() {
 	config := readConfiguration()
 
-	marshalSchema, schemaParseErr := schema.ParseFile(fmt.Sprintf("%s/%s", config.Schema.BaseDir, config.Schema.Stage))
+	serialSchema, schemaParseErr := schema.ParseFile(fmt.Sprintf("%s/%s", config.Schema.BaseDir, config.Schema.Stage))
 	if schemaParseErr != nil {
 		panic(schemaParseErr)
 	}
-	schemaParseErr = marshalSchema.ParseFile(fmt.Sprintf("%s/%s", config.Schema.BaseDir, config.Schema.Definition))
+	schemaParseErr = serialSchema.ParseFile(fmt.Sprintf("%s/%s", config.Schema.BaseDir, config.Schema.Definition))
 	if schemaParseErr != nil {
 		panic(schemaParseErr)
 	}
 
-	schemaValidationErr := marshalSchema.ValidateDefinitionStageMatch()
+	schemaValidationErr := serialSchema.ValidateDefinitionStageMatch()
 	if schemaValidationErr != nil {
 		panic(schemaValidationErr)
 	}
+
+	templates, generateErr := serialSchema.Generate(&schema.GenerationSettings{
+		// @@ flag dis
+		StageCodePaths: []string{"./bundle-builtins"},
+	})
+
+	if generateErr != nil {
+		panic(generateErr)
+	}
+
+	fmt.Println(templates)
 
 	// generate client wrappers
 	//  -- schema defintion to struct

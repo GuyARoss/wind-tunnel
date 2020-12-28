@@ -37,7 +37,13 @@ func (t *GeneratedTemplate) generateImports(imports map[string]string) {
 	`, strings.Join(values, "\n"))
 }
 
-func (t *GeneratedTemplate) generateStruct(name string, structProperties []string) {
+func (t *GeneratedTemplate) generateStruct(name string, structMapProperties map[string]string) {
+	structProperties := make([]string, 0)
+	for k, v := range structMapProperties {
+		prop := fmt.Sprintf(`%s %s`, k, v)
+		structProperties = append(structProperties, prop)
+	}
+
 	t.append(fmt.Sprintf(`
 	type %s struct {
 		%s

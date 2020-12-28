@@ -10,8 +10,8 @@ func TestGenerateStruct(t *testing.T) {
 	}
 	`
 
-	temp.generateStruct("Test123", []string{
-		"Property1 string",
+	temp.generateStruct("Test123", map[string]string{
+		"Property1": "string",
 	})
 
 	if temp.Content != expected {

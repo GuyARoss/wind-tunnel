@@ -65,9 +65,44 @@ type funcTemplate struct {
 	seralizedOutputs string
 }
 
+func createFuncTemplate(name string, inputs map[string]string, output []string, receiver string, body string) (*funcTemplate, error) {
+	seralizedInputs := make([]string, 0)
+	for k, v := range inputs {
+		// @@todo validate that the values exist in scope
+		seralizedInputs = append(seralizedInputs, fmt.Sprintf("%s %s", k, v))
+	}
+
+	return &funcTemplate{
+		name:             name,
+		body:             body,
+		receiverType:     receiver,
+		seralizedInputs:  seralizedInputs,
+		seralizedOutputs: strings.Join(output, ","),
+	}, nil
+}
+
+type structTemplate struct {
+	name       string
+	properties map[string]string
+	access     accessModification
+	funcs      map[string]*funcTemplate
+}
+
+func (r *structTemplate) applyFunc(name string, inputs map[string]string, output []string, body string) error {
+	reciever := fmt.Sprintf("*%s", r.name)
+
+	temp, err := createFuncTemplate(name, inputs, output, reciever, body)
+	if err != nil {
+		return err
+	}
+
+	r.funcs[name] = temp
+	return nil
+}
+
 // CodeTemplateCtx holds the template context throughout the lifecycle
 type CodeTemplateCtx struct {
-	structs  map[string][]string
+	structs  map[string]*structTemplate
 	funcs    map[string]*funcTemplate
 	imports  map[string]string
 	builtins map[string]string
@@ -78,20 +113,23 @@ type CodeTemplateCtx struct {
 // ApplyStruct creates a new struct within the code template
 func (t *CodeTemplateCtx) ApplyStruct(name string, properties map[string]string, access accessModification) error {
 	if t.structs[name] != nil {
-		// @@todo raise already exists error
+		// @@todo: raise already exists error
 	}
 
-	structProperties := make([]string, 0)
 	for propertyKey, propertyValue := range properties {
 		value := propertyValue
 		if isPrimitiveType(value) {
 			value = strings.ToLower(propertyValue)
 		}
-		structProperties = append(structProperties, newStructProperty(propertyKey, value, access))
+		properties[propertyKey] = newStructProperty(propertyKey, value, access)
 	}
 
 	name = access.formatToAccessType(name)
-	t.structs[name] = structProperties
+	t.structs[name] = &structTemplate{
+		name:       name,
+		properties: properties,
+		access:     access,
+	}
 
 	return nil
 }
@@ -99,19 +137,12 @@ func (t *CodeTemplateCtx) ApplyStruct(name string, properties map[string]string,
 // ApplyFunc creates a new func within the code template
 // note: body is not validated
 func (t *CodeTemplateCtx) ApplyFunc(name string, inputs map[string]string, output []string, receiver string, body string) error {
-	seralizedInputs := make([]string, 0)
-	for k, v := range inputs {
-		// @@todo validate that the values exist in scope
-		seralizedInputs = append(seralizedInputs, fmt.Sprintf("%s %s", k, v))
+	fnTemplate, err := createFuncTemplate(name, inputs, output, receiver, body)
+	if err != nil {
+		return err
 	}
 
-	t.funcs[name] = &funcTemplate{
-		name:             name,
-		body:             body,
-		receiverType:     receiver,
-		seralizedInputs:  seralizedInputs,
-		seralizedOutputs: strings.Join(output, ","),
-	}
+	t.funcs[name] = fnTemplate
 
 	return nil
 }
@@ -153,8 +184,8 @@ func (t *CodeTemplateCtx) Generate() (*GeneratedTemplate, error) {
 		Content: "",
 	}
 
-	for structKey, structProperties := range t.structs {
-		gtemp.generateStruct(structKey, structProperties)
+	for structKey, data := range t.structs {
+		gtemp.generateStruct(structKey, data.properties)
 	}
 
 	for _, funcTemplate := range t.funcs {

@@ -3,20 +3,33 @@ package schema
 import template "github.com/GuyARoss/windtunnel/pkg/golang-template"
 
 type GenerationSettings struct {
-	StageCodePaths map[string]string
+	StageCodePaths   []string
+	BaseStructs map[string]
 }
 
-// Load loads in client code generated from the schema
-func (s *ParserResponse) Load(settings *GenerationSettings) (map[string]*template.CodeTemplateCtx, error) {
-	// @@ validate that the pre, main & post input/ outputs line up
+func (s *GenerationSettings) generateStage(stageName string, stageProperties map[string]string) (*template.CodeTemplateCtx, error) {
+	stageCode := s.BaseCodeTemplate
+	err := stageCode.ApplyStruct(stageName, make(map[string]string, 0), template.PrivateAccess)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return nil, nil
+}
+
+// Generate loads in client code and generated it from the schema
+func (s *ParserResponse) Generate(settings *GenerationSettings) (map[string]*template.CodeTemplateCtx, error) {
 	templates := make(map[string]*template.CodeTemplateCtx)
 
+	baseCodeTemplate := 
+
 	// @@todo: lazy load in structs, apply the ones that will be needed for the stage
-
+	// @@performance: make each of these stages into go routines (they don't rely on each other)
 	for stageName, stageFields := range s.Stages {
-		// @@ validate that each stage has a code path, if not throw error
+		// @@todo: validate that each stage has a code path, if not throw error
 
-		stageGenerationResponse, stageGenerationErr := loadStage(stageName, stageFields.Properties)
+		stageGenerationResponse, stageGenerationErr := settings.generateStage(stageName, stageFields.Properties)
 		if stageGenerationErr != nil {
 			return templates, stageGenerationErr
 		}
@@ -25,17 +38,6 @@ func (s *ParserResponse) Load(settings *GenerationSettings) (map[string]*templat
 	}
 
 	return templates, nil
-}
-
-func loadStage(stageName string, stageProperties map[string]string) (*template.CodeTemplateCtx, error) {
-	stageCode := &template.CodeTemplateCtx{}
-	err := stageCode.ApplyStruct(stageName, make(map[string]string, 0), template.PrivateAccess)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return nil, nil
 }
 
 /* @@todo

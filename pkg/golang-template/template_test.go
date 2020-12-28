@@ -6,7 +6,7 @@ import (
 
 func TestApplyStruct_Public(t *testing.T) {
 	template := &CodeTemplateCtx{
-		structs: make(map[string][]string),
+		structs: make(map[string]*structTemplate),
 	}
 
 	properties := make(map[string]string, 3)
@@ -15,7 +15,7 @@ func TestApplyStruct_Public(t *testing.T) {
 	template.ApplyStruct("test123", properties, PublicAccess)
 
 	expected := "	Property1 string"
-	got := template.structs["Test123"][0]
+	got := template.structs["Test123"].properties["Property1"]
 	if got != expected {
 		t.Errorf("expected %s got %s", expected, got)
 	}
@@ -23,7 +23,7 @@ func TestApplyStruct_Public(t *testing.T) {
 
 func TestApplyStruct_Private(t *testing.T) {
 	template := &CodeTemplateCtx{
-		structs: make(map[string][]string),
+		structs: make(map[string]*structTemplate),
 	}
 
 	properties := make(map[string]string, 3)
@@ -32,7 +32,7 @@ func TestApplyStruct_Private(t *testing.T) {
 	template.ApplyStruct("test123", properties, PrivateAccess)
 
 	expected := "	Property1 string"
-	got := template.structs["test123"][0]
+	got := template.structs["test123"].properties["Property1"]
 	if got != expected {
 		t.Errorf("expected %s got %s", expected, got)
 	}
