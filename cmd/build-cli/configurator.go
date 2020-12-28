@@ -16,14 +16,9 @@ type CompositionConfiguration struct {
 		Definition string `yaml:"definition"`
 	}
 	Stages []struct {
-		Name   string `yaml:"name"`
-		RunCmd string `yaml:"runCmd"`
-		Code   struct {
-			BaseDir   string `yaml:"baseDir"`
-			PreStage  string `yaml:"preStage"`
-			Stage     string `yaml:"stage"`
-			PostStage string `yaml:"postStage"`
-		}
+		Name     string `yaml:"name"`
+		RunCmd   string `yaml:"runCmd"`
+		CodeFile string `yaml:"codeFile"`
 	}
 }
 

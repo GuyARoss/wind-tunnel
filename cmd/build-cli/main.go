@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"io/ioutil"
 
@@ -25,8 +26,7 @@ func main() {
 	}
 
 	templates, generateErr := serialSchema.Generate(&schema.GenerationSettings{
-		// @@ flag dis
-		StageCodePaths: []string{"./bundle-builtins"},
+		BuiltinsDir: *flag.String("builtins", "./builtins", "specifies generation builtins directory"),
 	})
 
 	if generateErr != nil {
