@@ -82,21 +82,21 @@ func createFuncTemplate(name string, inputs map[string]string, output []string, 
 }
 
 type StructTemplate struct {
-	name       string
-	properties map[string]string
-	access     accessModification
-	funcs      map[string]*FuncTemplate
+	Name       string
+	Properties map[string]string
+	Access     accessModification
+	Funcs      map[string]*FuncTemplate
 }
 
 func (r *StructTemplate) ApplyFunc(name string, inputs map[string]string, output []string, body string) error {
-	reciever := fmt.Sprintf("*%s", r.name)
+	reciever := fmt.Sprintf("*%s", r.Name)
 
 	temp, err := createFuncTemplate(name, inputs, output, reciever, body)
 	if err != nil {
 		return err
 	}
 
-	r.funcs[name] = temp
+	r.Funcs[name] = temp
 	return nil
 }
 
@@ -126,9 +126,9 @@ func (t *CodeTemplateCtx) ApplyStruct(name string, properties map[string]string,
 
 	name = access.formatToAccessType(name)
 	t.Structs[name] = &StructTemplate{
-		name:       name,
-		properties: properties,
-		access:     access,
+		Name:       name,
+		Properties: properties,
+		Access:     access,
 	}
 
 	return nil
@@ -185,7 +185,7 @@ func (t *CodeTemplateCtx) Generate() (*GeneratedTemplate, error) {
 	}
 
 	for structKey, data := range t.Structs {
-		gtemp.generateStruct(structKey, data.properties)
+		gtemp.generateStruct(structKey, data.Properties)
 	}
 
 	for _, funcTemplate := range t.Funcs {

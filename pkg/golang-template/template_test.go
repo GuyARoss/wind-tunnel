@@ -15,7 +15,7 @@ func TestApplyStruct_Public(t *testing.T) {
 	template.ApplyStruct("test123", properties, PublicAccess)
 
 	expected := "	Property1 string"
-	got := template.Structs["Test123"].properties["Property1"]
+	got := template.Structs["Test123"].Properties["Property1"]
 	if got != expected {
 		t.Errorf("expected %s got %s", expected, got)
 	}
@@ -32,7 +32,7 @@ func TestApplyStruct_Private(t *testing.T) {
 	template.ApplyStruct("test123", properties, PrivateAccess)
 
 	expected := "	Property1 string"
-	got := template.Structs["test123"].properties["Property1"]
+	got := template.Structs["test123"].Properties["Property1"]
 	if got != expected {
 		t.Errorf("expected %s got %s", expected, got)
 	}

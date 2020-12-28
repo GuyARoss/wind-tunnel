@@ -15,13 +15,13 @@ func (s *GenerationCtx) generateStage(stageName string, stageProperties map[stri
 	stageCode := &template.CodeTemplateCtx{}
 
 	err := stageCode.ApplyStruct(stageName, map[string]string{
-		"codeFile": "string"
+		"codeFile": "string",
 	}, template.PrivateAccess)
 
 	in := stageProperties["in"]
 	out := stageProperties["out"]
 
-	stageCode.Structs[stageName].ApplyFunc("invoke", map[string]string{in}, []string{out}, `
+	stageCode.Structs[stageName].ApplyFunc("invoke", map[string]string{"input": in}, []string{out}, `
 	// @@todo: fill in 
 	return nil
 	`)
@@ -37,30 +37,30 @@ func (s *GenerationCtx) generateStage(stageName string, stageProperties map[stri
 func (s *ParserResponse) Generate(settings *GenerationSettings) (map[string]*template.CodeTemplateCtx, error) {
 	generationCtx := &GenerationCtx{
 		BaseStructs: make(map[string]*template.StructTemplate),
-		Settings: settings
+		Settings:    settings,
 	}
-	
+
 	for defKey, def := range s.Definitions {
 		// @@todo: add the validation functions to each of these
 		structTemplate := &template.StructTemplate{
-			name: defKey,
-			properties: def.Properties,
-			access: template.PublicAccess,
+			Name:       defKey,
+			Properties: def.Properties,
+			Access:     template.PublicAccess,
 		}
 		structTemplate.ApplyFunc("validate", make(map[string]string), []string{"error"}, `
 		//@@todo: fill in
 		return nil
 		`)
 	}
-	
+
 	templates := make(map[string]*template.CodeTemplateCtx)
-	
+
 	// @@todo: apply only the structures that are needed for the stage (this may need to be done during code generation)
 	// @@performance: make each of these stages into go routines
 	for stageName, stageFields := range s.Stages {
 		// @@todo: validate that each stage has a code path, if not throw error
 
-		stageGenerationResponse, stageGenerationErr := settings.generateStage(stageName, stageFields.Properties)
+		stageGenerationResponse, stageGenerationErr := generationCtx.generateStage(stageName, stageFields.Properties)
 		if stageGenerationErr != nil {
 			return templates, stageGenerationErr
 		}
