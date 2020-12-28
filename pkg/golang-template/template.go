@@ -57,7 +57,7 @@ func isPrimitiveType(field string) bool {
 	return slice.Contains(primitives, strings.ToLower(field))
 }
 
-type funcTemplate struct {
+type FuncTemplate struct {
 	name             string
 	body             string
 	receiverType     string
@@ -65,14 +65,14 @@ type funcTemplate struct {
 	seralizedOutputs string
 }
 
-func createFuncTemplate(name string, inputs map[string]string, output []string, receiver string, body string) (*funcTemplate, error) {
+func createFuncTemplate(name string, inputs map[string]string, output []string, receiver string, body string) (*FuncTemplate, error) {
 	seralizedInputs := make([]string, 0)
 	for k, v := range inputs {
 		// @@todo validate that the values exist in scope
 		seralizedInputs = append(seralizedInputs, fmt.Sprintf("%s %s", k, v))
 	}
 
-	return &funcTemplate{
+	return &FuncTemplate{
 		name:             name,
 		body:             body,
 		receiverType:     receiver,
@@ -81,14 +81,14 @@ func createFuncTemplate(name string, inputs map[string]string, output []string, 
 	}, nil
 }
 
-type structTemplate struct {
+type StructTemplate struct {
 	name       string
 	properties map[string]string
 	access     accessModification
-	funcs      map[string]*funcTemplate
+	funcs      map[string]*FuncTemplate
 }
 
-func (r *structTemplate) applyFunc(name string, inputs map[string]string, output []string, body string) error {
+func (r *StructTemplate) ApplyFunc(name string, inputs map[string]string, output []string, body string) error {
 	reciever := fmt.Sprintf("*%s", r.name)
 
 	temp, err := createFuncTemplate(name, inputs, output, reciever, body)
@@ -102,17 +102,17 @@ func (r *structTemplate) applyFunc(name string, inputs map[string]string, output
 
 // CodeTemplateCtx holds the template context throughout the lifecycle
 type CodeTemplateCtx struct {
-	structs  map[string]*structTemplate
-	funcs    map[string]*funcTemplate
-	imports  map[string]string
-	builtins map[string]string
+	Structs  map[string]*StructTemplate
+	Funcs    map[string]*FuncTemplate
+	Imports  map[string]string
+	Builtins map[string]string
 
 	BuiltinDir string
 }
 
 // ApplyStruct creates a new struct within the code template
 func (t *CodeTemplateCtx) ApplyStruct(name string, properties map[string]string, access accessModification) error {
-	if t.structs[name] != nil {
+	if t.Structs[name] != nil {
 		// @@todo: raise already exists error
 	}
 
@@ -125,7 +125,7 @@ func (t *CodeTemplateCtx) ApplyStruct(name string, properties map[string]string,
 	}
 
 	name = access.formatToAccessType(name)
-	t.structs[name] = &structTemplate{
+	t.Structs[name] = &StructTemplate{
 		name:       name,
 		properties: properties,
 		access:     access,
@@ -142,7 +142,7 @@ func (t *CodeTemplateCtx) ApplyFunc(name string, inputs map[string]string, outpu
 		return err
 	}
 
-	t.funcs[name] = fnTemplate
+	t.Funcs[name] = fnTemplate
 
 	return nil
 }
@@ -168,11 +168,11 @@ func (t *CodeTemplateCtx) ApplyBuiltin(
 
 	// apply source maps + validate imports
 	for k, v := range bctx.imports {
-		t.imports[k] = v
+		t.Imports[k] = v
 	}
 
 	for k, v := range bctx.sourceMap {
-		t.builtins[k] = v
+		t.Builtins[k] = v
 	}
 
 	return nil
@@ -184,15 +184,15 @@ func (t *CodeTemplateCtx) Generate() (*GeneratedTemplate, error) {
 		Content: "",
 	}
 
-	for structKey, data := range t.structs {
+	for structKey, data := range t.Structs {
 		gtemp.generateStruct(structKey, data.properties)
 	}
 
-	for _, funcTemplate := range t.funcs {
+	for _, funcTemplate := range t.Funcs {
 		gtemp.generateFunc(funcTemplate)
 	}
 
-	gtemp.generateImports(t.imports)
+	gtemp.generateImports(t.Imports)
 
 	return gtemp, nil
 }
