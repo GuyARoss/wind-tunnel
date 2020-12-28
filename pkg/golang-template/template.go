@@ -150,15 +150,15 @@ func (t *CodeTemplateCtx) ApplyFunc(name string, inputs map[string]string, outpu
 // ApplyBuiltin applies builtin + their dependencies to the code template
 func (t *CodeTemplateCtx) ApplyBuiltin(
 	builtinsDir string,
-	requiredDependencies []string,
+	requirements []string,
 	changeMap map[string]string,
 ) error {
 	files := utilities.FindFiles(builtinsDir, ".go")
 
 	bctx := &builtinCtx{
-		requiredDependencies: requiredDependencies,
-		sourceMap:            make(map[string]string),
+		requiredDependencies: requirements,
 		scope:                nonScopeType,
+		sourceMap:            make(map[string]string),
 		imports:              make(map[string]string),
 	}
 
@@ -172,6 +172,7 @@ func (t *CodeTemplateCtx) ApplyBuiltin(
 	}
 
 	for k, v := range bctx.sourceMap {
+		// @@todo: apply changeMap
 		t.Builtins[k] = v
 	}
 

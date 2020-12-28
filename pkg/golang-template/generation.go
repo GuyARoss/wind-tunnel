@@ -10,6 +10,11 @@ type GeneratedTemplate struct {
 	Content string
 }
 
+func (t *GeneratedTemplate) SaveFile() error {
+	// @@todo: save dis content to a file
+	return nil
+}
+
 func (t *GeneratedTemplate) append(data string) {
 	if len(t.Content) == 0 {
 		t.Content += fmt.Sprintf("%s", data)
