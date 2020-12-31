@@ -56,7 +56,12 @@ func main() {
 		panic(generateErr)
 	}
 
-	fmt.Println(templates)
+	for k, v := range templates {
+		saveErr := v.SaveFile(k)
+		if saveErr != nil {
+			panic(saveErr)
+		}
+	}
 
 	// generate client wrappers
 	//  -- schema defintion to struct

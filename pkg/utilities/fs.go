@@ -1,15 +1,12 @@
 package utilities
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 )
 
 func FindFiles(rootDir string, fileType string) []string {
 	files := make([]string, 0)
-
-	fmt.Println(rootDir)
 
 	err := filepath.Walk(rootDir, func(path string, info os.FileInfo, err error) error {
 		if info.IsDir() {

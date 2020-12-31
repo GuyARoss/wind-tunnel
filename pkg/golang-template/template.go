@@ -58,26 +58,44 @@ func isPrimitiveType(field string) bool {
 }
 
 type FuncTemplate struct {
-	name             string
-	body             string
-	receiverType     string
-	seralizedInputs  []string
-	seralizedOutputs string
+	name         string
+	body         string
+	receiverType string
+	inputs       map[string]string
+	outputs      []string
 }
 
-func createFuncTemplate(name string, inputs map[string]string, output []string, receiver string, body string) (*FuncTemplate, error) {
-	seralizedInputs := make([]string, 0)
-	for k, v := range inputs {
-		// @@todo validate that the values exist in scope
-		seralizedInputs = append(seralizedInputs, fmt.Sprintf("%s %s", k, v))
-	}
+func CreateFuncTemplate(name string, inputs map[string]string, outputs []string, receiver string, body string) (*FuncTemplate, error) {
+	// seralizedInputs := make([]string, 0)
+	// for k, v := range inputs {
+	// 	// @@todo validate that the values exist in scope
+	// 	seralizedInputs = append(seralizedInputs, fmt.Sprintf("%s %s", k, v))
+	// }
 
 	return &FuncTemplate{
-		name:             name,
-		body:             body,
-		receiverType:     receiver,
-		seralizedInputs:  seralizedInputs,
-		seralizedOutputs: strings.Join(output, ","),
+		name:         name,
+		body:         body,
+		receiverType: receiver,
+		inputs:       inputs,
+		outputs:      outputs,
+	}, nil
+}
+
+func CreateStructTemplate(name string, properties map[string]string, access accessModification) (*StructTemplate, error) {
+	for propertyKey, propertyValue := range properties {
+		value := propertyValue
+		if isPrimitiveType(value) {
+			value = strings.ToLower(propertyValue)
+		}
+		properties[propertyKey] = newStructProperty(propertyKey, value, access)
+	}
+
+	name = access.formatToAccessType(name)
+	return &StructTemplate{
+		Name:       name,
+		Properties: properties,
+		Access:     access,
+		Funcs:      make(map[string]*FuncTemplate),
 	}, nil
 }
 
@@ -91,12 +109,11 @@ type StructTemplate struct {
 func (r *StructTemplate) ApplyFunc(name string, inputs map[string]string, output []string, body string) error {
 	reciever := fmt.Sprintf("*%s", r.Name)
 
-	temp, err := createFuncTemplate(name, inputs, output, reciever, body)
+	temp, err := CreateFuncTemplate(name, inputs, output, reciever, body)
 	if err != nil {
 		return err
 	}
 
-	fmt.Println(r.Funcs)
 	r.Funcs[name] = temp
 	return nil
 }
@@ -117,29 +134,19 @@ func (t *CodeTemplateCtx) ApplyStruct(name string, properties map[string]string,
 		// @@todo: raise already exists error
 	}
 
-	for propertyKey, propertyValue := range properties {
-		value := propertyValue
-		if isPrimitiveType(value) {
-			value = strings.ToLower(propertyValue)
-		}
-		properties[propertyKey] = newStructProperty(propertyKey, value, access)
+	newStruct, err := CreateStructTemplate(name, properties, access)
+	if err != nil {
+		return nil, err
 	}
 
-	name = access.formatToAccessType(name)
-	t.Structs[name] = &StructTemplate{
-		Name:       name,
-		Properties: properties,
-		Access:     access,
-		Funcs:      make(map[string]*FuncTemplate),
-	}
-
-	return &name, nil
+	t.Structs[newStruct.Name] = newStruct
+	return &newStruct.Name, nil
 }
 
 // ApplyFunc creates a new func within the code template
 // note: body is not validated
 func (t *CodeTemplateCtx) ApplyFunc(name string, inputs map[string]string, output []string, receiver string, body string) error {
-	fnTemplate, err := createFuncTemplate(name, inputs, output, receiver, body)
+	fnTemplate, err := CreateFuncTemplate(name, inputs, output, receiver, body)
 	if err != nil {
 		return err
 	}
@@ -188,16 +195,25 @@ func (t *CodeTemplateCtx) Generate() (*GeneratedTemplate, error) {
 	gtemp := &GeneratedTemplate{
 		Content: "",
 	}
+	gtemp.generateModuleName("main")
+	gtemp.generateImports(t.Imports)
 
 	for structKey, data := range t.Structs {
 		gtemp.generateStruct(structKey, data.Properties)
+
+		for _, fn := range data.Funcs {
+			gtemp.generateFunc(fn)
+		}
 	}
 
 	for _, funcTemplate := range t.Funcs {
 		gtemp.generateFunc(funcTemplate)
 	}
 
-	gtemp.generateImports(t.Imports)
+	fmt.Println(t.Builtins)
+	for _, bn := range t.Builtins {
+		gtemp.append(bn)
+	}
 
 	return gtemp, nil
 }

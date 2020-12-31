@@ -110,7 +110,6 @@ func ParseFile(path string) (*ParserResponse, error) {
 func (r *ParserResponse) ValidateDefinitionStageMatch() error {
 	// ensure that all definitions that are defined within stages exist
 	for stage, stageValues := range r.Stages {
-		fmt.Println(stage, stageValues.Properties)
 		for _, definitionName := range stageValues.Properties {
 			if definitionName != "None" && r.Definitions[definitionName] == nil {
 				return fmt.Errorf("definition `%s` missing for stage `%s`", definitionName, stage)

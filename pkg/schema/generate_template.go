@@ -1,6 +1,8 @@
 package schema
 
 import (
+	"fmt"
+
 	template "github.com/GuyARoss/windtunnel/pkg/golang-template"
 )
 
@@ -17,7 +19,7 @@ type GenerationCtx struct {
 
 func (s *GenerationCtx) generateStage(stageName string, stageProperties map[string]string) (*template.CodeTemplateCtx, error) {
 	stageCode := &template.CodeTemplateCtx{
-		Structs:    make(map[string]*template.StructTemplate),
+		Structs:    s.BaseStructs,
 		Funcs:      make(map[string]*template.FuncTemplate),
 		Imports:    make(map[string]string),
 		Builtins:   make(map[string]string),
@@ -48,17 +50,17 @@ func (s *GenerationCtx) generateStage(stageName string, stageProperties map[stri
 		return nil, err
 	}
 
-	// @@ could use a builtin for dis..
-	stageCode.Structs[*updatedStageName].ApplyFunc("invoke", map[string]string{"input": in}, []string{out}, `
-	// @@todo: fill in 
-	// - validate input from "input" param
-	// - write data to pipe
-	// - read data from pipe
-	// - marshal pipe data to "output" type
-	// - validate output
-	// - return output
-
-	return nil
+	pointerIn := fmt.Sprintf("*%s", in)
+	// @@fyi could use a builtin for dis..
+	stageCode.Structs[*updatedStageName].ApplyFunc("invoke", map[string]string{"input": pointerIn}, []string{out}, `
+// @@todo: fill in 
+// - validate input from "input" param
+// - write data to pipe
+// - read data from pipe
+// - marshal pipe data to "output" type
+// - validate output
+// - return output
+return nil
 	`)
 
 	if err != nil {
@@ -76,16 +78,16 @@ func (s *ParserResponse) Generate(settings *GenerationSettings) (map[string]*tem
 	}
 
 	for defKey, def := range s.Definitions {
-		structTemplate := &template.StructTemplate{
-			Name:       defKey,
-			Properties: def.Properties,
-			Access:     template.PublicAccess,
-			Funcs:      make(map[string]*template.FuncTemplate),
+		structTemplate, structCreateErr := template.CreateStructTemplate(defKey, def.Properties, template.PublicAccess)
+		if structCreateErr != nil {
+			return nil, structCreateErr
 		}
 		structTemplate.ApplyFunc("validate", make(map[string]string), []string{"error"}, `
-		//@@todo: fill in
-		return nil
+//@@todo: fill in
+return nil
 		`)
+
+		generationCtx.BaseStructs[defKey] = structTemplate
 	}
 
 	templates := make(map[string]*template.GeneratedTemplate)
