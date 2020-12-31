@@ -62,8 +62,8 @@ import (
 
 func (t *GeneratedTemplate) generateStruct(name string, structMapProperties map[string]string) {
 	structProperties := make([]string, 0)
-	for _, v := range structMapProperties {
-		structProperties = append(structProperties, v)
+	for k, v := range structMapProperties {
+		structProperties = append(structProperties, fmt.Sprintf("%s %s", k, v))
 	}
 
 	t.append(fmt.Sprintf(`

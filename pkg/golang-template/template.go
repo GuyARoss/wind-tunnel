@@ -30,12 +30,12 @@ func (access accessModification) formatToAccessType(value string) string {
 	}
 }
 
-func newStructProperty(key string, value string, access accessModification) string {
+func newStructKey(key string, value string, access accessModification) string {
 	if access == PublicAccess {
 		key = strings.Title(key)
 	}
 
-	return fmt.Sprintf("	%s %s", key, value)
+	return key
 }
 
 type codeChars string
@@ -87,7 +87,8 @@ func CreateStructTemplate(name string, properties map[string]string, access acce
 		if isPrimitiveType(value) {
 			value = strings.ToLower(propertyValue)
 		}
-		properties[propertyKey] = newStructProperty(propertyKey, value, access)
+		structKey := newStructKey(propertyKey, value, access)
+		properties[structKey] = value
 	}
 
 	name = access.formatToAccessType(name)

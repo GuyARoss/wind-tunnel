@@ -5,9 +5,9 @@ import "testing"
 func TestGenerateStruct(t *testing.T) {
 	temp := &GeneratedTemplate{Content: ""}
 	expected := `
-	type Test123 struct {
-		Property1 string
-	}
+type Test123 struct {
+	Property1 string
+}
 	`
 
 	temp.generateStruct("Test123", map[string]string{
@@ -22,17 +22,19 @@ func TestGenerateStruct(t *testing.T) {
 func TestGenerateFunc_Reciver(t *testing.T) {
 	temp := &GeneratedTemplate{Content: ""}
 	expected := `
-	func (r *Test) TestFunc(cat string) (string,error) {
-		// do some code
-	}
+func (r *Test) TestFunc(cat string) (string, error) {
+	// do some code
+}
 	`
 
 	temp.generateFunc(&FuncTemplate{
-		name:             "TestFunc",
-		body:             "// do some code",
-		receiverType:     "*Test",
-		seralizedInputs:  []string{"cat string"},
-		seralizedOutputs: "string,error",
+		name:         "TestFunc",
+		body:         "// do some code",
+		receiverType: "*Test",
+		inputs: map[string]string{
+			"cat": "string",
+		},
+		outputs: []string{"string", "error"},
 	})
 
 	if expected != temp.Content {
@@ -43,17 +45,19 @@ func TestGenerateFunc_Reciver(t *testing.T) {
 func TestGenerateFunc_NoReciver(t *testing.T) {
 	temp := &GeneratedTemplate{Content: ""}
 	expected := `
-	func TestFunc(cat string) (string,error) {
-		// do some code
-	}
+func TestFunc(cat string) (string, error) {
+	// do some code
+}
 	`
 
 	temp.generateFunc(&FuncTemplate{
-		name:             "TestFunc",
-		body:             "// do some code",
-		receiverType:     "",
-		seralizedInputs:  []string{"cat string"},
-		seralizedOutputs: "string,error",
+		name:         "TestFunc",
+		body:         "// do some code",
+		receiverType: "",
+		inputs: map[string]string{
+			"cat": "string",
+		},
+		outputs: []string{"string", "error"},
 	})
 
 	if expected != temp.Content {
@@ -64,9 +68,9 @@ func TestGenerateFunc_NoReciver(t *testing.T) {
 func TestGenerateImports(t *testing.T) {
 	temp := &GeneratedTemplate{Content: ""}
 	expected := `
-	import (
-		"thing"
-	)
+import (
+	"thing"
+)
 	`
 
 	imports := make(map[string]string)
