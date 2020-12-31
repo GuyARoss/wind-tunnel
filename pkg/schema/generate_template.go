@@ -1,6 +1,8 @@
 package schema
 
-import template "github.com/GuyARoss/windtunnel/pkg/golang-template"
+import (
+	template "github.com/GuyARoss/windtunnel/pkg/golang-template"
+)
 
 // GenerationSettings initial settings for template generation
 type GenerationSettings struct {
@@ -14,7 +16,13 @@ type GenerationCtx struct {
 }
 
 func (s *GenerationCtx) generateStage(stageName string, stageProperties map[string]string) (*template.CodeTemplateCtx, error) {
-	stageCode := &template.CodeTemplateCtx{}
+	stageCode := &template.CodeTemplateCtx{
+		Structs:    make(map[string]*template.StructTemplate),
+		Funcs:      make(map[string]*template.FuncTemplate),
+		Imports:    make(map[string]string),
+		Builtins:   make(map[string]string),
+		BuiltinDir: s.Settings.BuiltinsDir,
+	}
 
 	in := stageProperties["in"]
 	out := stageProperties["out"]
@@ -32,12 +40,16 @@ func (s *GenerationCtx) generateStage(stageName string, stageProperties map[stri
 		return nil, builtinErr
 	}
 
-	err := stageCode.ApplyStruct(stageName, map[string]string{
+	updatedStageName, err := stageCode.ApplyStruct(stageName, map[string]string{
 		"codeFile": "string",
 	}, template.PrivateAccess)
 
+	if err != nil {
+		return nil, err
+	}
+
 	// @@ could use a builtin for dis..
-	stageCode.Structs[stageName].ApplyFunc("invoke", map[string]string{"input": in}, []string{out}, `
+	stageCode.Structs[*updatedStageName].ApplyFunc("invoke", map[string]string{"input": in}, []string{out}, `
 	// @@todo: fill in 
 	// - validate input from "input" param
 	// - write data to pipe
@@ -53,7 +65,7 @@ func (s *GenerationCtx) generateStage(stageName string, stageProperties map[stri
 		return nil, err
 	}
 
-	return nil, nil
+	return stageCode, nil
 }
 
 // Generate loads in parsed schema context and generates client code from it
@@ -68,6 +80,7 @@ func (s *ParserResponse) Generate(settings *GenerationSettings) (map[string]*tem
 			Name:       defKey,
 			Properties: def.Properties,
 			Access:     template.PublicAccess,
+			Funcs:      make(map[string]*template.FuncTemplate),
 		}
 		structTemplate.ApplyFunc("validate", make(map[string]string), []string{"error"}, `
 		//@@todo: fill in

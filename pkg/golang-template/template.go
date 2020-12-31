@@ -96,6 +96,7 @@ func (r *StructTemplate) ApplyFunc(name string, inputs map[string]string, output
 		return err
 	}
 
+	fmt.Println(r.Funcs)
 	r.Funcs[name] = temp
 	return nil
 }
@@ -111,7 +112,7 @@ type CodeTemplateCtx struct {
 }
 
 // ApplyStruct creates a new struct within the code template
-func (t *CodeTemplateCtx) ApplyStruct(name string, properties map[string]string, access accessModification) error {
+func (t *CodeTemplateCtx) ApplyStruct(name string, properties map[string]string, access accessModification) (*string, error) {
 	if t.Structs[name] != nil {
 		// @@todo: raise already exists error
 	}
@@ -129,9 +130,10 @@ func (t *CodeTemplateCtx) ApplyStruct(name string, properties map[string]string,
 		Name:       name,
 		Properties: properties,
 		Access:     access,
+		Funcs:      make(map[string]*FuncTemplate),
 	}
 
-	return nil
+	return &name, nil
 }
 
 // ApplyFunc creates a new func within the code template
@@ -153,6 +155,8 @@ func (t *CodeTemplateCtx) ApplyBuiltin(
 	requirements []string,
 	changeMap map[string]string,
 ) error {
+	// @@ we could run part of this process once to load all of the builtins-
+	// @@ then again to apply them to the template
 	files := utilities.FindFiles(builtinsDir, ".go")
 
 	bctx := &builtinCtx{

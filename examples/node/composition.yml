@@ -6,4 +6,4 @@ schema:
 stages:
   - name: Stage1
     runCmd: node
-    codeFile: ./stages/stage1/stage.js
+    codeFile: ./stages/stage1/entry.js
