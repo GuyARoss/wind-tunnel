@@ -2,24 +2,25 @@ package template
 
 import (
 	"bufio"
+	"fmt"
 	"log"
 	"os"
 	"strings"
-
-	"github.com/stretchr/stew/slice"
 )
 
 func linearStrContains(line string, matchTo string) bool {
 	matchCharIdx := 0
-	matchSize := len(matchTo) - 1
+	matchSize := 1
+	if len(matchTo) > 1 {
+		matchSize = len(matchTo) - 1
+	}
 
 	for _, c := range line {
-		if string(c) != string(matchTo[matchCharIdx]) {
-			matchCharIdx = 0
-			continue
+		if string(c) == string(matchTo[matchCharIdx]) {
+			matchCharIdx++
 		}
 
-		matchCharIdx++
+		// fmt.Printf("%d %d %s %s \n", matchSize, matchCharIdx, line, matchTo)
 		if matchCharIdx == matchSize {
 			return true
 		}
@@ -34,6 +35,7 @@ type importLine struct {
 }
 
 func parseImportLine(line string) *importLine {
+	fmt.Printf("importLine :: %s \n", line)
 	path := strings.Split(line, "\"")[1]
 	filePaths := strings.Split(path, "/")
 
@@ -51,7 +53,7 @@ const (
 )
 
 type builtinCtx struct {
-	requiredDependencies []string
+	requiredDependencies []*BuiltinRequirement
 	sourceMap            map[string]string
 	scope                builtinScopeType
 	imports              map[string]string
@@ -66,30 +68,39 @@ func (ctx *builtinCtx) parseBuiltinLine(
 			ctx.sourceMap[string(ctx.scope)] += lineStr
 			ctx.scope = nonScopeType
 		}
+	}
 
-		// not end of def yet, so pass
+	if linearStrContains(lineStr, string(importScopeType)) {
+		fmt.Printf("importScope:set: %s \n", lineStr)
+		ctx.scope = importScopeType
 		return nil
 	}
 
-	// @@ check if single line import
+	// @@todo: check if single line import
 	if ctx.scope == importScopeType {
-		if slice.Contains(lineStr, endImportBlockChar) {
+		fmt.Printf("importScope:: %s \n", lineStr)
+		if linearStrContains(lineStr, string(endImportBlockChar)) {
+			fmt.Printf("dis gets hit 4 some reason? %s \n", lineStr)
 			ctx.scope = nonScopeType
 			return nil
 		}
 
-		importLine := parseImportLine(string(line))
+		importLine := parseImportLine(lineStr)
 		ctx.imports[importLine.name] = importLine.path
+		fmt.Printf("imports:: %s \n", ctx.imports)
+
+		return nil
 	}
 
 	for _, rd := range ctx.requiredDependencies {
-		if linearStrContains(lineStr, rd) {
-			ctx.scope = builtinScopeType(rd)
-			ctx.sourceMap[rd] += lineStr
+		if linearStrContains(lineStr, rd.Name) && linearStrContains(lineStr, string(rd.Type)) {
+			fmt.Printf("requiredDep:: %s :: %s \n", rd.Name, lineStr)
 
-			return nil
+			ctx.scope = builtinScopeType(rd.Name)
 		}
 	}
+
+	ctx.sourceMap[string(ctx.scope)] += fmt.Sprintf("%s \n", lineStr)
 
 	return nil
 }

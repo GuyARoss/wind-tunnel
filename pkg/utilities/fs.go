@@ -13,7 +13,7 @@ func FindFiles(rootDir string, fileType string) []string {
 			return nil
 		}
 
-		if filepath.Ext(path) == fileType {
+		if filepath.Ext(path) != fileType {
 			return nil
 		}
 

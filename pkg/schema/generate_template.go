@@ -31,7 +31,14 @@ func (s *GenerationCtx) generateStage(stageName string, stageProperties map[stri
 	// @@todo: validate in & out
 
 	builtinErr := stageCode.ApplyBuiltin(s.Settings.BuiltinsDir,
-		[]string{"xxx_Pipein", "xxx_Pipeout", "pipeEnv", "writeToPipe", "readFromPipe", "startUpStage"},
+		[]*template.BuiltinRequirement{
+			&template.BuiltinRequirement{Name: "xxx_Pipein", Type: template.StructBuiltinRequirement},
+			&template.BuiltinRequirement{Name: "xxx_Pipeout", Type: template.StructBuiltinRequirement},
+			&template.BuiltinRequirement{Name: "pipeEnv", Type: template.StructBuiltinRequirement},
+			&template.BuiltinRequirement{Name: "writeToPipe", Type: template.FuncBuiltinRequirement},
+			&template.BuiltinRequirement{Name: "readFromPipe", Type: template.FuncBuiltinRequirement},
+			&template.BuiltinRequirement{Name: "startUpStage", Type: template.FuncBuiltinRequirement},
+		},
 		map[string]string{
 			"xxx_Pipein":  in,
 			"xxx_Pipeout": out,
@@ -51,8 +58,10 @@ func (s *GenerationCtx) generateStage(stageName string, stageProperties map[stri
 	}
 
 	pointerIn := fmt.Sprintf("*%s", in)
+	pointerOut := fmt.Sprintf("*%s", out)
+
 	// @@fyi could use a builtin for dis..
-	stageCode.Structs[*updatedStageName].ApplyFunc("invoke", map[string]string{"input": pointerIn}, []string{out}, `
+	stageCode.Structs[*updatedStageName].ApplyFunc("invoke", map[string]string{"input": pointerIn}, []string{pointerOut}, `
 // @@todo: fill in 
 // - validate input from "input" param
 // - write data to pipe
@@ -102,9 +111,9 @@ return nil
 			return templates, stageGenerationErr
 		}
 
-		codeGeneration, codeGenerationErrr := stageGenerationResponse.Generate()
-		if codeGenerationErrr != nil {
-			return templates, codeGenerationErrr
+		codeGeneration, codeGenerationErr := stageGenerationResponse.Generate()
+		if codeGenerationErr != nil {
+			return templates, codeGenerationErr
 		}
 
 		templates[stageName] = codeGeneration

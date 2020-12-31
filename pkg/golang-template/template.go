@@ -41,8 +41,9 @@ func newStructKey(key string, value string, access accessModification) string {
 type codeChars string
 
 const (
-	endCodeBlockChar   codeChars = "}"
-	endImportBlockChar codeChars = ")"
+	endCodeBlockChar     codeChars = "}"
+	endImportBlockChar   codeChars = ")"
+	startImportBlockChar codeChars = "("
 )
 
 type primitiveFieldTypes string
@@ -50,6 +51,7 @@ type primitiveFieldTypes string
 const (
 	stringPrimitive primitiveFieldTypes = "string"
 	intPrimitive    primitiveFieldTypes = "int"
+	boolPrimitive   primitiveFieldTypes = "bool"
 )
 
 func isPrimitiveType(field string) bool {
@@ -82,19 +84,21 @@ func CreateFuncTemplate(name string, inputs map[string]string, outputs []string,
 }
 
 func CreateStructTemplate(name string, properties map[string]string, access accessModification) (*StructTemplate, error) {
+	modifiedProperties := make(map[string]string)
+
 	for propertyKey, propertyValue := range properties {
 		value := propertyValue
 		if isPrimitiveType(value) {
 			value = strings.ToLower(propertyValue)
 		}
 		structKey := newStructKey(propertyKey, value, access)
-		properties[structKey] = value
+		modifiedProperties[structKey] = value
 	}
 
 	name = access.formatToAccessType(name)
 	return &StructTemplate{
 		Name:       name,
-		Properties: properties,
+		Properties: modifiedProperties,
 		Access:     access,
 		Funcs:      make(map[string]*FuncTemplate),
 	}, nil
@@ -157,15 +161,28 @@ func (t *CodeTemplateCtx) ApplyFunc(name string, inputs map[string]string, outpu
 	return nil
 }
 
+type BuiltinRequirementType string
+
+const (
+	StructBuiltinRequirement BuiltinRequirementType = "struct"
+	FuncBuiltinRequirement   BuiltinRequirementType = "func"
+)
+
+type BuiltinRequirement struct {
+	Name string
+	Type BuiltinRequirementType
+}
+
 // ApplyBuiltin applies builtin + their dependencies to the code template
 func (t *CodeTemplateCtx) ApplyBuiltin(
 	builtinsDir string,
-	requirements []string,
+	requirements []*BuiltinRequirement,
 	changeMap map[string]string,
 ) error {
 	// @@ we could run part of this process once to load all of the builtins-
 	// @@ then again to apply them to the template
 	files := utilities.FindFiles(builtinsDir, ".go")
+	fmt.Println(files)
 
 	bctx := &builtinCtx{
 		requiredDependencies: requirements,
@@ -178,6 +195,7 @@ func (t *CodeTemplateCtx) ApplyBuiltin(
 		bctx.loadBuiltinFile(file)
 	}
 
+	fmt.Printf("imports: %s \n", bctx.imports)
 	// apply source maps + validate imports
 	for k, v := range bctx.imports {
 		t.Imports[k] = v
